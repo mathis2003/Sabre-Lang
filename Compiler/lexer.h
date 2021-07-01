@@ -42,6 +42,8 @@ typedef struct TokenArr {
 TokenArr* lex_code(char* file_name);
 
 void skip_white_space(char* code_str, int* cur_index);
+void skip_line_comment(char* code_str, int* cur_index);
+void skip_block_comment(char* code_str, int* cur_index);
 
 void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);
 void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);

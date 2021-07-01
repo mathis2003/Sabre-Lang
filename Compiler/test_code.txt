@@ -1,3 +1,16 @@
 identifier1
 identifier20
 500identifier
+|""here is just a very normal
+regular 
+block comment
+""|
+in_between_comments
+--however this is a line comment
+_again_between
+|"" and then
+finally,
+|"" we have
+a nested
+""|
+block comment ""|

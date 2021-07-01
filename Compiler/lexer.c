@@ -64,13 +64,15 @@ TokenArr* lex_code(char* file_name) {
     for (int i = 0; i <= result_tok_arr->str_bucket.bucket_capacity; i++) {
         
         // skip whitespace
-        if (is_white_space(code_string[i]))   { skip_white_space(code_string, &i);                     continue; }
+        if (is_white_space(code_string[i]))                                              { skip_white_space(code_string, &i);                     continue; }
         
         // skip comment
+        else if (code_string[i] == '-' && code_string[i+1] == '-')                       { skip_line_comment(code_string, &i);                    continue; }
+        if (code_string[i] == '|' && code_string[i+1] == '"' && code_string[i+2] == '"') { skip_block_comment(code_string, &i);                   continue; }
         
         // lex code
-        if (is_identifier(code_string[i], 1)) { add_identifier_token(result_tok_arr, code_string, &i); continue; }
-        else if (is_number(code_string[i]))   { add_number_token(result_tok_arr, code_string, &i);     continue; }
+        else if (is_identifier(code_string[i], 1))                                       { add_identifier_token(result_tok_arr, code_string, &i); continue; }
+        else if (is_number(code_string[i]))                                              { add_number_token(result_tok_arr, code_string, &i);     continue; }
         
     }
     
@@ -88,10 +90,37 @@ TokenArr* lex_code(char* file_name) {
 void skip_white_space(char* code_str, int* cur_index) {
     while (is_white_space(code_str[(*cur_index)])) {
         if (code_str[(*cur_index)] == '\n') cur_line_in_file++;
-        (*cur_index) += 1;
+        (*cur_index)++;
     }
     
     (*cur_index)--;
+}
+
+void skip_line_comment(char* code_str, int* cur_index) {
+    (*cur_index)++;
+    while (code_str[(*cur_index)] != '\n') (*cur_index)++;
+    
+    cur_line_in_file++;
+}
+
+void skip_block_comment(char* code_str, int* cur_index) {
+    int open_comments = 1;
+    (*cur_index) += 2;
+    
+    while (open_comments) {
+        if (code_str[(*cur_index)] == '\"' && code_str[(*cur_index)+1] == '\"' && code_str[(*cur_index)+2] == '|') {
+            open_comments--;
+            (*cur_index) += 2;
+        }
+         else if( code_str[(*cur_index)] == '|' && code_str[(*cur_index)+1] == '\"' && code_str[(*cur_index)+2] == '\"') {
+             open_comments++;
+             (*cur_index) += 2;
+         }
+        else {
+            if (code_str[(*cur_index)] == '\n') cur_line_in_file++;
+            (*cur_index)++;
+        }
+    }
 }
 
 
