@@ -30,6 +30,26 @@ void print_tokens(TokenArr* tok_arr) {
                 printf("\n");
                 break;
             }
+            
+            case TOK_STRING: {
+                printf("TOK_STRING\n");
+                printf("\t-name: ");
+                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name[j]);
+                }
+                printf("\n");
+                break;
+            }
+            
+            case TOK_CHAR: {
+                printf("TOK_CHAR\n");
+                printf("\t-name: ");
+                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name[j]);
+                }
+                printf("\n");
+                break;
+            }
                 
             default:
                 break;

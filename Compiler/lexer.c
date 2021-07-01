@@ -73,6 +73,8 @@ TokenArr* lex_code(char* file_name) {
         // lex code
         else if (is_identifier(code_string[i], 1))                                       { add_identifier_token(result_tok_arr, code_string, &i); continue; }
         else if (is_number(code_string[i]))                                              { add_number_token(result_tok_arr, code_string, &i);     continue; }
+        else if (code_string[i] == '\"')                                                 { add_string_token(result_tok_arr, code_string, &i);     continue; }
+        else if (code_string[i] == '\'')                                                 { add_char_token(result_tok_arr, code_string, &i);       continue; }
         
     }
     
@@ -166,6 +168,48 @@ void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) 
     tok.name_length = (*cur_index) - start_index;
     
     (*cur_index)--;
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+    
+}
+
+void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
+    (*cur_index)++;
+    
+    // create token
+    Token tok;
+    tok.file_name = cur_file_name;
+    tok.line = cur_line_in_file;
+    tok.tok_type = TOK_STRING;
+    tok.name = &(code_str[(*cur_index)]);
+    
+    int start_index = (*cur_index);
+    for ( ; code_str[(*cur_index)] != '\"'; (*cur_index)++)
+        ;
+    
+    tok.name_length = (*cur_index) - start_index;
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+    
+}
+
+void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
+    (*cur_index)++;
+    
+    // create token
+    Token tok;
+    tok.file_name = cur_file_name;
+    tok.line = cur_line_in_file;
+    tok.tok_type = TOK_CHAR;
+    tok.name = &(code_str[(*cur_index)]);
+    
+    int start_index = (*cur_index);
+    for ( ; code_str[(*cur_index)] != '\''; (*cur_index)++)
+        ;
+    
+    tok.name_length = (*cur_index) - start_index;
     
     // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);

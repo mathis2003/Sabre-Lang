@@ -47,6 +47,8 @@ void skip_block_comment(char* code_str, int* cur_index);
 
 void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);
 void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);
+void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);
+void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index);
 
 int is_identifier(char ch, char is_first);
 int is_number(char ch);
