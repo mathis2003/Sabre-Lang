@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "pretty_printer.h"
 
 int main(int argc, char** argv) {
     
@@ -15,7 +16,11 @@ int main(int argc, char** argv) {
         return 1;
     }
     
+    print_tokens(tok_arr);
     
+    // PARSING...
+    
+    free_tokens(tok_arr);
     
 	return 0;
 }

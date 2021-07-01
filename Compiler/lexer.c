@@ -4,11 +4,14 @@
 #include <stdio.h>
 
 #include "lexer.h"
-//#include "lexer_commons.h"
 
 
 // LEXER
+char* cur_file_name;
+int cur_line_in_file = 1;
 TokenArr* lex_code(char* file_name) {
+    cur_file_name = file_name;
+    
     TokenArr* result_tok_arr;
     int amount_of_chars_in_file = 0;
     
@@ -60,8 +63,14 @@ TokenArr* lex_code(char* file_name) {
     char* code_string = result_tok_arr->str_bucket.strings; // using a shorter name for the pointer to the character array in the StringBucket
     for (int i = 0; i <= result_tok_arr->str_bucket.bucket_capacity; i++) {
         
+        // skip whitespace
+        if (is_white_space(code_string[i]))   { skip_white_space(code_string, &i);                     continue; }
+        
+        // skip comment
+        
         // lex code
-        printf("%c", code_string[i]);
+        if (is_identifier(code_string[i], 1)) { add_identifier_token(result_tok_arr, code_string, &i); continue; }
+        else if (is_number(code_string[i]))   { add_number_token(result_tok_arr, code_string, &i);     continue; }
         
     }
     
@@ -72,13 +81,87 @@ TokenArr* lex_code(char* file_name) {
 }
 
 
+/*--------------------------------------------------------------------------------------------------------------------------*/
+/* white space and comment skipping functions                                                                               */
+/*--------------------------------------------------------------------------------------------------------------------------*/
 
-
-
+void skip_white_space(char* code_str, int* cur_index) {
+    while (is_white_space(code_str[(*cur_index)])) {
+        if (code_str[(*cur_index)] == '\n') cur_line_in_file++;
+        (*cur_index) += 1;
+    }
+    
+    (*cur_index)--;
+}
 
 
 /*--------------------------------------------------------------------------------------------------------------------------*/
-/* common needed functions                                                                                                  */
+/* Token adding functions                                                                                                   */
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
+void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
+    
+    // create token
+    Token tok;
+    tok.file_name = cur_file_name;
+    tok.line = cur_line_in_file;
+    tok.tok_type = TOK_IDENTIFIER;
+    tok.name = &(code_str[(*cur_index)]);
+    
+    int start_index = (*cur_index);
+    for ( ; is_identifier(code_str[((*cur_index))], 0); (*cur_index)++)
+        ;
+    
+    tok.name_length = (*cur_index) - start_index;
+    
+    (*cur_index)--;
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+    
+}
+
+void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
+    
+    // create token
+    Token tok;
+    tok.file_name = cur_file_name;
+    tok.line = cur_line_in_file;
+    tok.tok_type = TOK_NUMBER;
+    tok.name = &(code_str[(*cur_index)]);
+    
+    int start_index = (*cur_index);
+    for ( ; is_number(code_str[((*cur_index))]); (*cur_index)++)
+        ;
+    
+    tok.name_length = (*cur_index) - start_index;
+    
+    (*cur_index)--;
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+    
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
+int is_identifier(char ch, char is_first) {
+    if (is_first) return (ch == '_') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z');
+    return (ch == '_') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9');
+}
+
+int is_number(char ch) {
+    return ('0' <= ch && ch <= '9');
+}
+
+int is_white_space(char ch) {
+    return (ch == ' ') || (ch == '\t') || (ch == '\n') || (ch == '\r');
+}
+
+
+/*--------------------------------------------------------------------------------------------------------------------------*/
+/* Common needed functions                                                                                                  */
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
 void init_str_bucket(struct StringBucket* str_bucket, int str_bucket_capacity) {
@@ -112,4 +195,10 @@ void add_tok_to_arr(struct TokenArr* tok_arr, struct Token* tok) {
 
     tok_arr->tokens[tok_arr->size] = *tok;
     tok_arr->size += 1;
+}
+
+void free_tokens(struct TokenArr* tok_arr) {
+    free(tok_arr->tokens);
+    free(tok_arr->str_bucket.strings);
+    free(tok_arr);
 }

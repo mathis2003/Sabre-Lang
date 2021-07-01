@@ -1,4 +1,3 @@
-this is some text
-just to test whether the lexer goes through this correctly.
-
-bye
+identifier1
+identifier20
+500identifier
