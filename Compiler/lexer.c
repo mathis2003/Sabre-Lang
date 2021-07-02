@@ -61,7 +61,7 @@ TokenArr* lex_code(char* file_name) {
     /*----------------------------------------------------------------------------------------------------------------------*/
 
     char* code_string = result_tok_arr->str_bucket.strings; // using a shorter name for the pointer to the character array in the StringBucket
-    for (int i = 0; i <= result_tok_arr->str_bucket.bucket_capacity; i++) {
+    for (int i = 0; i < result_tok_arr->str_bucket.bucket_capacity; i++) {
         
         // skip whitespace
         if (is_white_space(code_string[i]))                                              { skip_white_space(code_string, &i);                     continue; }
@@ -75,6 +75,25 @@ TokenArr* lex_code(char* file_name) {
         else if (is_number(code_string[i]))                                              { add_number_token(result_tok_arr, code_string, &i);     continue; }
         else if (code_string[i] == '\"')                                                 { add_string_token(result_tok_arr, code_string, &i);     continue; }
         else if (code_string[i] == '\'')                                                 { add_char_token(result_tok_arr, code_string, &i);       continue; }
+        else if (code_string[i] == ',')                                                  { add_comma_token(result_tok_arr);                       continue; }
+        else if (code_string[i] == '.')                                                  { add_dot_token(result_tok_arr);                         continue; }
+        else if (code_string[i] == ';')                                                  { add_semi_colon_token(result_tok_arr);                  continue; }
+        else if (code_string[i] == ':')                                                  { add_colon_token(result_tok_arr);                       continue; }
+        else if (code_string[i] == '+')                                                  { add_plus_token(result_tok_arr);                        continue; }
+        else if (code_string[i] == '-')                                                  { add_minus_token(result_tok_arr);                       continue; }
+        else if (code_string[i] == '*')                                                  { add_asterisk_token(result_tok_arr);                    continue; }
+        else if (code_string[i] == '/')                                                  { add_slash_token(result_tok_arr);                       continue; }
+        else if (code_string[i] == '$')                                                  { add_dollar_sign_token(result_tok_arr);                 continue; }
+        else if (code_string[i] == '@')                                                  { add_at_sign_token(result_tok_arr);                     continue; }
+        else if (code_string[i] == '=')                                                  { add_equals_token(result_tok_arr);                      continue; }
+        else if (code_string[i] == '(')                                                  { add_open_paren_token(result_tok_arr);                  continue; }
+        else if (code_string[i] == ')')                                                  { add_close_paren_token(result_tok_arr);                 continue; }
+        else if (code_string[i] == '{')                                                  { add_open_curly_token(result_tok_arr);                  continue; }
+        else if (code_string[i] == '}')                                                  { add_close_curly_token(result_tok_arr);                 continue; }
+        else if (code_string[i] == '[')                                                  { add_open_square_bracket_token(result_tok_arr);         continue; }
+        else if (code_string[i] == ']')                                                  { add_close_square_bracket_token(result_tok_arr);        continue; }
+        else if (code_string[i] == '<')                                                  { add_open_angle_bracket_token(result_tok_arr);          continue; }
+        else if (code_string[i] == '>')                                                  { add_close_angle_bracket_token(result_tok_arr);         continue; }
         
     }
     
@@ -130,48 +149,54 @@ void skip_block_comment(char* code_str, int* cur_index) {
 /* Token adding functions                                                                                                   */
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
+void init_tok(Token* tok, enum TokenType token_type, char* name_str, int name_str_length) {
+    tok->file_name = cur_file_name;
+    tok->line = cur_line_in_file;
+    tok->tok_type = token_type;
+    tok->name = name_str;
+    tok->name_length = name_str_length;
+}
+
 void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
-    
     // create token
     Token tok;
-    tok.file_name = cur_file_name;
-    tok.line = cur_line_in_file;
-    tok.tok_type = TOK_IDENTIFIER;
-    tok.name = &(code_str[(*cur_index)]);
     
+    // get name length
     int start_index = (*cur_index);
-    for ( ; is_identifier(code_str[((*cur_index))], 0); (*cur_index)++)
-        ;
+    for ( ; is_identifier(code_str[((*cur_index))], 0); (*cur_index)++) {
+        // also make sure the cur_index hasn't reached the maximum of the string bucket, else: break
+        if ((*cur_index) >= tok_arr->str_bucket.bucket_capacity) {
+            break;
+        }
+    }
     
-    tok.name_length = (*cur_index) - start_index;
+    init_tok(&tok, TOK_IDENTIFIER, &(code_str[start_index]), ((*cur_index) - start_index));
     
     (*cur_index)--;
     
     // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
-    
 }
 
 void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
-    
     // create token
     Token tok;
-    tok.file_name = cur_file_name;
-    tok.line = cur_line_in_file;
-    tok.tok_type = TOK_NUMBER;
-    tok.name = &(code_str[(*cur_index)]);
     
+    // get name length
     int start_index = (*cur_index);
-    for ( ; is_number(code_str[((*cur_index))]); (*cur_index)++)
-        ;
+    for ( ; is_number(code_str[((*cur_index))]); (*cur_index)++) {
+        // also make sure the cur_index hasn't reached the maximum of the string bucket, else: break
+        if ((*cur_index) >= tok_arr->str_bucket.bucket_capacity) {
+            break;
+        }
+    }
     
-    tok.name_length = (*cur_index) - start_index;
+    init_tok(&tok, TOK_NUMBER, &(code_str[start_index]), ((*cur_index) - start_index));
     
     (*cur_index)--;
     
     // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
-    
 }
 
 void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
@@ -179,20 +204,20 @@ void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) 
     
     // create token
     Token tok;
-    tok.file_name = cur_file_name;
-    tok.line = cur_line_in_file;
-    tok.tok_type = TOK_STRING;
-    tok.name = &(code_str[(*cur_index)]);
     
+    // get name length
     int start_index = (*cur_index);
-    for ( ; code_str[(*cur_index)] != '\"'; (*cur_index)++)
-        ;
+    for ( ; code_str[(*cur_index)] != '\"'; (*cur_index)++) {
+        // also make sure the cur_index hasn't reached the maximum of the string bucket, else: break
+        if ((*cur_index) >= tok_arr->str_bucket.bucket_capacity) {
+            break;
+        }
+    }
     
-    tok.name_length = (*cur_index) - start_index;
+    init_tok(&tok, TOK_STRING, &(code_str[start_index]), ((*cur_index) - start_index));
     
     // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
-    
 }
 
 void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
@@ -200,21 +225,193 @@ void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
     
     // create token
     Token tok;
-    tok.file_name = cur_file_name;
-    tok.line = cur_line_in_file;
-    tok.tok_type = TOK_CHAR;
-    tok.name = &(code_str[(*cur_index)]);
     
+    // get name length
     int start_index = (*cur_index);
-    for ( ; code_str[(*cur_index)] != '\''; (*cur_index)++)
-        ;
+    for ( ; code_str[(*cur_index)] != '\''; (*cur_index)++) {
+        // also make sure the cur_index hasn't reached the maximum of the string bucket, else: break
+        if ((*cur_index) >= tok_arr->str_bucket.bucket_capacity) {
+            break;
+        }
+    }
     
-    tok.name_length = (*cur_index) - start_index;
+    init_tok(&tok, TOK_CHAR, &(code_str[start_index]), ((*cur_index) - start_index));
     
     // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
-    
 }
+
+void add_comma_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_COMMA, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_dot_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_DOT, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_semi_colon_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_SEMI_COLON, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_colon_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_COLON, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_plus_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_PLUS, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_minus_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_MINUS, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_asterisk_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_ASTERISK, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_slash_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_SLASH, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_dollar_sign_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_DOLLAR_SIGN, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_at_sign_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_AT_SIGN, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_equals_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_EQUALS, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_open_paren_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_OPEN_PAREN, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_close_paren_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_CLOSE_PAREN, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_open_curly_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_OPEN_CURLY, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_close_curly_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_CLOSE_CURLY, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_open_square_bracket_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_OPEN_SQUARE_BRACKET, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_close_square_bracket_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_CLOSE_SQUARE_BRACKET, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_open_angle_bracket_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_OPEN_ANGLE_BRACKET, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_close_angle_bracket_token(struct TokenArr* tok_arr) {
+    // create token
+    Token tok;
+    init_tok(&tok, TOK_CLOSE_ANGLE_BRACKET, NULL, 0);
+    
+    // add token to dynamic token array
+    add_tok_to_arr(tok_arr, &tok);
+}
+
 
 /*--------------------------------------------------------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------------------------*/

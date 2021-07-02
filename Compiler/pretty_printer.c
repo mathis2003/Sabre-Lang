@@ -50,6 +50,101 @@ void print_tokens(TokenArr* tok_arr) {
                 printf("\n");
                 break;
             }
+            
+            case TOK_COMMA: {
+                printf("TOK_COMMA\n");
+                break;
+            }
+            
+            case TOK_DOT: {
+                printf("TOK_DOT\n");
+                break;
+            }
+            
+            case TOK_SEMI_COLON: {
+                printf("TOK_SEMI_COLON\n");
+                break;
+            }
+                
+            case TOK_COLON: {
+                printf("TOK_COLON\n");
+                break;
+            }
+            
+            case TOK_PLUS: {
+                printf("TOK_PLUS\n");
+                break;
+            }
+            
+            case TOK_MINUS: {
+                printf("TOK_MINUS\n");
+                break;
+            }
+            
+            case TOK_ASTERISK: {
+                printf("TOK_ASTERISK\n");
+                break;
+            }
+            
+            case TOK_SLASH: {
+                printf("TOK_SLASH\n");
+                break;
+            }
+            
+            case TOK_DOLLAR_SIGN: {
+                printf("TOK_DOLLAR_SIGN\n");
+                break;
+            }
+            
+            case TOK_AT_SIGN: {
+                printf("TOK_AT_SIGN\n");
+                break;
+            }
+            
+            case TOK_EQUALS: {
+                printf("TOK_EQUALS\n");
+                break;
+            }
+            
+            case TOK_OPEN_PAREN: {
+                printf("TOK_OPEN_PAREN\n");
+                break;
+            }
+            
+            case TOK_CLOSE_PAREN: {
+                printf("TOK_CLOSE_PAREN\n");
+                break;
+            }
+            
+            case TOK_OPEN_CURLY: {
+                printf("TOK_OPEN_CURLY\n");
+                break;
+            }
+            
+            case TOK_CLOSE_CURLY: {
+                printf("TOK_CLOSE_CURLY\n");
+                break;
+            }
+            
+            case TOK_OPEN_SQUARE_BRACKET: {
+                printf("TOK_OPEN_SQUARE_BRACKET\n");
+                break;
+            }
+            
+            case TOK_CLOSE_SQUARE_BRACKET: {
+                printf("TOK_CLOSE_SQUARE_BRACKET\n");
+                break;
+            }
+            
+            case TOK_OPEN_ANGLE_BRACKET: {
+                printf("TOK_OPEN_ANGLE_BRACKET\n");
+                break;
+            }
+            
+            case TOK_CLOSE_ANGLE_BRACKET: {
+                printf("TOK_CLOSE_ANGLE_BRACKET\n");
+                break;
+            }
                 
             default:
                 break;

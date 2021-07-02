@@ -16,3 +16,4 @@ a nested
 block comment ""|
 "this is a string however"
 'and this is a char'
+,.;:+-*/$@=(){}[]<>
