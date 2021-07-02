@@ -11,55 +11,58 @@ char* cur_file_name;
 int cur_line_in_file = 1;
 TokenArr* lex_code(char* file_name) {
     cur_file_name = file_name;
-    
     TokenArr* result_tok_arr;
-    int amount_of_chars_in_file = 0;
     
     
-    /*----------------------------------------------------------------------------------------------------------------------*/
-    /* Loop through the entire file, to see how many characters it contains                                                 */
-    /*----------------------------------------------------------------------------------------------------------------------*/
-    
+    /*--------------------------------------------------------------------------------------------------------------------------*/
+    /* initialize result_tok_arr and write file contents to its StringBucket                                                    */
+    /*--------------------------------------------------------------------------------------------------------------------------*/
     {
-        FILE* file_ptr = fopen(file_name, "r");
-        if (file_ptr == NULL) { return NULL; }
-    
-        {
-            int ch;
-            while ((ch = fgetc(file_ptr)) != EOF) amount_of_chars_in_file++;
-        }
+        int amount_of_chars_in_file = 0;
         
-        fclose(file_ptr);
-    }
-    
-    
-    /*----------------------------------------------------------------------------------------------------------------------*/
-    /* Now we have the amount of characters in the file,                                                                    */
-    /* initialize result_tok_arr and give the characters of the file to its StringBucket                                    */
-    /*----------------------------------------------------------------------------------------------------------------------*/
-    
-    result_tok_arr = malloc(sizeof(TokenArr));
-    init_tok_arr(result_tok_arr, amount_of_chars_in_file);
-    {
-        FILE* file_ptr = fopen(file_name, "r");
-        if (file_ptr == NULL) { return NULL; }
-    
+        /*----------------------------------------------------------------------------------------------------------------------*/
+        /* Loop through the entire file, to see how many characters it contains                                                 */
+        /*----------------------------------------------------------------------------------------------------------------------*/
         {
-            int ch;
-            while ((ch = fgetc(file_ptr)) != EOF) {
-                // fill StringBucket of result_tok_arr
-                if (1 == add_char_to_str_bucket(&(result_tok_arr->str_bucket), ch)) { return NULL; } // StringBucket was already full
+            FILE* file_ptr = fopen(file_name, "r");
+            if (file_ptr == NULL) { return NULL; }
+    
+            {
+                int ch;
+                while ((ch = fgetc(file_ptr)) != EOF) amount_of_chars_in_file++;
             }
+        
+            fclose(file_ptr);
         }
     
-        fclose(file_ptr);
+    
+        /*----------------------------------------------------------------------------------------------------------------------*/
+        /* Now we have the amount of characters in the file,                                                                    */
+        /* initialize result_tok_arr and give the characters of the file to its StringBucket                                    */
+        /*----------------------------------------------------------------------------------------------------------------------*/
+        result_tok_arr = malloc(sizeof(TokenArr));
+        init_tok_arr(result_tok_arr, amount_of_chars_in_file);
+        {
+            FILE* file_ptr = fopen(file_name, "r");
+            if (file_ptr == NULL) { return NULL; }
+    
+            {
+                int ch;
+                while ((ch = fgetc(file_ptr)) != EOF) {
+                    // fill StringBucket of result_tok_arr
+                    if (1 == add_char_to_str_bucket(&(result_tok_arr->str_bucket), ch)) { return NULL; } // StringBucket was already full
+                }
+            }
+    
+            fclose(file_ptr);
+        }
+    
     }
     
-    /*----------------------------------------------------------------------------------------------------------------------*/
-    /* StringBucket of result_tok_arr should be filled,                                                                     */
-    /* start lexing the entire string of code in StringBucket                                                               */
-    /*----------------------------------------------------------------------------------------------------------------------*/
-
+    /*--------------------------------------------------------------------------------------------------------------------------*/
+    /* StringBucket of result_tok_arr should be filled,                                                                         */
+    /* start lexing the entire string of code in StringBucket                                                                   */
+    /*--------------------------------------------------------------------------------------------------------------------------*/
     char* code_string = result_tok_arr->str_bucket.strings; // using a shorter name for the pointer to the character array in the StringBucket
     for (int i = 0; i < result_tok_arr->str_bucket.bucket_capacity; i++) {
         
@@ -98,15 +101,13 @@ TokenArr* lex_code(char* file_name) {
     }
     
     
-    
-    
     return result_tok_arr;
 }
 
 
-/*--------------------------------------------------------------------------------------------------------------------------*/
-/* white space and comment skipping functions                                                                               */
-/*--------------------------------------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------------------------------------------*/
+/* white space and comment skipping functions                                                                                    */
+/*-------------------------------------------------------------------------------------------------------------------------------*/
 
 void skip_white_space(char* code_str, int* cur_index) {
     while (is_white_space(code_str[(*cur_index)])) {
@@ -145,9 +146,9 @@ void skip_block_comment(char* code_str, int* cur_index) {
 }
 
 
-/*--------------------------------------------------------------------------------------------------------------------------*/
-/* Token adding functions                                                                                                   */
-/*--------------------------------------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------------------------------------------*/
+/* Token adding functions                                                                                                        */
+/*-------------------------------------------------------------------------------------------------------------------------------*/
 
 void init_tok(Token* tok, enum TokenType token_type, char* name_str, int name_str_length) {
     tok->file_name = cur_file_name;
@@ -413,8 +414,8 @@ void add_close_angle_bracket_token(struct TokenArr* tok_arr) {
 }
 
 
-/*--------------------------------------------------------------------------------------------------------------------------*/
-/*--------------------------------------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------------------------------------------*/
 
 int is_identifier(char ch, char is_first) {
     if (is_first) return (ch == '_') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z');
@@ -430,9 +431,9 @@ int is_white_space(char ch) {
 }
 
 
-/*--------------------------------------------------------------------------------------------------------------------------*/
-/* Common needed functions                                                                                                  */
-/*--------------------------------------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------------------------------------------*/
+/* Common needed functions                                                                                                       */
+/*-------------------------------------------------------------------------------------------------------------------------------*/
 
 void init_str_bucket(struct StringBucket* str_bucket, int str_bucket_capacity) {
     str_bucket->bucket_capacity = str_bucket_capacity;
