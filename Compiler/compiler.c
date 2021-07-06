@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     
     tok_arr = lex_code(argv[1]);
     if (tok_arr == NULL) {
-        printf("ERROR OCCURED DURING LEXING\n");
+        printf("ERROR OCCURRED DURING LEXING\n");
         return 1;
     }
     
