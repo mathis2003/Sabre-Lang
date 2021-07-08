@@ -1,6 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include "string_commons.h"
 
 typedef enum TokenType {
 	TOK_IDENTIFIER, TOK_NUMBER, TOK_STRING, TOK_CHAR, TOK_COMMA, TOK_DOT, TOK_SEMI_COLON, TOK_COLON,
@@ -24,8 +25,7 @@ typedef struct Token {
 	int line;
 	enum TokenType tok_type;
     
-	char* name;
-    int name_length;
+    struct StringStruct name_str;
 } Token;
 
 typedef struct TokenArr {

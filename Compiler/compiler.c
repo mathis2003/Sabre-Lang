@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "parser.h"
 #include "pretty_printer.h"
 
 int main(int argc, char** argv) {
@@ -19,7 +20,10 @@ int main(int argc, char** argv) {
     print_tokens(tok_arr);
     
     // PARSING...
+    struct Program* program_node_ptr = parse_tokens(tok_arr);
     
+    print_parse_tree(program_node_ptr);
+
     free_tokens(tok_arr);
     
 	return 0;

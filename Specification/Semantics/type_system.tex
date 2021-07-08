@@ -1,0 +1,45 @@
+\documentclass[a4paper, 12pt]{report}
+
+\title{\Large{Operational Semantics}}
+
+\begin{document}
+\maketitle
+
+\section{Types}
+
+The unsigned integers are constructed as follows
+$$
+{}
+$$
+(1)
+$$
+{{}\over{{\Gamma}\vdash {i: u32}}}
+$$
+(2)
+$$
+{{(x,T)\in{\Gamma}}
+\over
+{{\Gamma}\vdash {x : T}}}
+$$
+(3)
+$$
+{{{\Gamma}\vdash {e1: u32}{\;}{\Gamma}\vdash {e2: u32}}
+\over
+{{\Gamma}\vdash {e1 + e2: u32}}}
+$$
+(4)
+$$
+{{{\Gamma}{,x:T1}\vdash {e: T2}}
+\over
+{{\Gamma}\vdash {(f(x:T1){\rightarrow} e) : (T1 \rightarrow T2)}}}
+$$
+(5)
+$$
+{{{\Gamma}\vdash{e1 : T \rightarrow T'}{\;\:}{\Gamma}\vdash {e2: T}}
+\over
+{{\Gamma}\vdash{e1(e2) : T'}}}
+$$
+
+
+
+\end{document}

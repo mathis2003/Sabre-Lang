@@ -3,8 +3,16 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "parser.h"
 
 void print_tokens(TokenArr* tok_arr) {
+    
+    // Print header
+    
+    printf("\n\n----------------\n|    TOKENS   |\n----------------\n\n");
+    
+    // Print body
+    
     for (int i = 0; i < tok_arr->size; i++) {
         printf("TOKEN:\n");
         printf("\t-file: %s\n", tok_arr->tokens[i].file_name);
@@ -14,8 +22,8 @@ void print_tokens(TokenArr* tok_arr) {
             case TOK_IDENTIFIER: {
                 printf("TOK_IDENTIFIER\n");
                 printf("\t-name: ");
-                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
-                    printf("%c", tok_arr->tokens[i].name[j]);
+                for (int j = 0; j < tok_arr->tokens[i].name_str.str_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name_str.str_start[j]);
                 }
                 printf("\n");
                 break;
@@ -24,8 +32,8 @@ void print_tokens(TokenArr* tok_arr) {
             case TOK_NUMBER: {
                 printf("TOK_NUMBER\n");
                 printf("\t-name: ");
-                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
-                    printf("%c", tok_arr->tokens[i].name[j]);
+                for (int j = 0; j < tok_arr->tokens[i].name_str.str_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name_str.str_start[j]);
                 }
                 printf("\n");
                 break;
@@ -34,8 +42,8 @@ void print_tokens(TokenArr* tok_arr) {
             case TOK_STRING: {
                 printf("TOK_STRING\n");
                 printf("\t-name: ");
-                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
-                    printf("%c", tok_arr->tokens[i].name[j]);
+                for (int j = 0; j < tok_arr->tokens[i].name_str.str_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name_str.str_start[j]);
                 }
                 printf("\n");
                 break;
@@ -44,8 +52,8 @@ void print_tokens(TokenArr* tok_arr) {
             case TOK_CHAR: {
                 printf("TOK_CHAR\n");
                 printf("\t-name: ");
-                for (int j = 0; j < tok_arr->tokens[i].name_length; j++) {
-                    printf("%c", tok_arr->tokens[i].name[j]);
+                for (int j = 0; j < tok_arr->tokens[i].name_str.str_length; j++) {
+                    printf("%c", tok_arr->tokens[i].name_str.str_start[j]);
                 }
                 printf("\n");
                 break;
@@ -150,5 +158,19 @@ void print_tokens(TokenArr* tok_arr) {
                 break;
         }
         
+    }
+}
+
+void print_parse_tree(Program* program_node) {
+    
+    // Print header
+    printf("\n\n---------------\n|     AST     |\n---------------\n\n");
+    
+    // Print body
+    
+    printf("-PROGRAM:\n");
+    if (program_node->entry_point == NULL) printf("NO ENTRY POINT -> INVALID PROGRAM\n");
+    else {
+        printf("\t-ENTRY_POINT:\n");
     }
 }

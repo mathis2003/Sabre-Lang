@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "string_commons.h"
 
 
 // LEXER
@@ -154,8 +155,9 @@ void init_tok(Token* tok, enum TokenType token_type, char* name_str, int name_st
     tok->file_name = cur_file_name;
     tok->line = cur_line_in_file;
     tok->tok_type = token_type;
-    tok->name = name_str;
-    tok->name_length = name_str_length;
+    
+    tok->name_str.str_start = name_str;
+    tok->name_str.str_length = name_str_length;
 }
 
 void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
