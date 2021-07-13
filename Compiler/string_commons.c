@@ -12,3 +12,8 @@ int str_equals_literal(struct StringStruct* str, char* str_literal) {
     
     return 1;
 }
+
+void print_str_struct(struct StringStruct* str) {
+    for (int i = 0; i < str->str_length; i++)
+        printf("%c", str->str_start[i]);
+}

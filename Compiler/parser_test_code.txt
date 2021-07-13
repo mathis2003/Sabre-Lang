@@ -1,5 +1,5 @@
 
-ENTRY_POINT(args : String[]) {
+ENTRY_POINT(<args : String[]>) {
 	|"" 
 	code comes
 	in this scope

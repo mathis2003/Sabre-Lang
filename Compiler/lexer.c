@@ -1,4 +1,31 @@
 
+/* REFACTORING:
+ *------------------------------------------------------------------
+ *------------------------------------------------------------------
+ * KEYWORDSS:
+ *------------------------------------------------------------------
+ * CHECK FOR KEYWORDS IN add_identifier_token()
+ *------------------------------------------------------------------
+ *------------------------------------------------------------------
+ * ERRORS:
+ *------------------------------------------------------------------
+ * TABLE OF ERRORS
+ * UNKNOWN CHARACTER + INDICATING WHERE EXACTLY (with some context)
+ * CHARACTER LITERAL MUST ONLY HAVE ONE CHARACTER OR ESCAPE SEQUENCE
+ *------------------------------------------------------------------
+ *------------------------------------------------------------------
+ * ALLOCATORS:
+ *------------------------------------------------------------------
+ * RENAME "StringBucket" to "StringArena"
+ *------------------------------------------------------------------
+ *------------------------------------------------------------------
+ * COMMENTS
+ *------------------------------------------------------------------
+ * MAKE BLOCK COMMENTS DETECT END OF FILE CHARACTER
+ *------------------------------------------------------------------
+ */
+
+
 // INCLUDES
 #include <stdlib.h>
 #include <stdio.h>
@@ -98,9 +125,7 @@ TokenArr* lex_code(char* file_name) {
         else if (code_string[i] == ']')                                                  { add_close_square_bracket_token(result_tok_arr);        continue; }
         else if (code_string[i] == '<')                                                  { add_open_angle_bracket_token(result_tok_arr);          continue; }
         else if (code_string[i] == '>')                                                  { add_close_angle_bracket_token(result_tok_arr);         continue; }
-        
     }
-    
     
     return result_tok_arr;
 }
@@ -161,7 +186,6 @@ void init_tok(Token* tok, enum TokenType token_type, char* name_str, int name_st
 }
 
 void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
-    // create token
     Token tok;
     
     // get name length
@@ -177,12 +201,10 @@ void add_identifier_token(struct TokenArr* tok_arr, char* code_str, int* cur_ind
     
     (*cur_index)--;
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
-    // create token
     Token tok;
     
     // get name length
@@ -198,14 +220,12 @@ void add_number_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) 
     
     (*cur_index)--;
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
     (*cur_index)++;
     
-    // create token
     Token tok;
     
     // get name length
@@ -219,14 +239,12 @@ void add_string_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) 
     
     init_tok(&tok, TOK_STRING, &(code_str[start_index]), ((*cur_index) - start_index));
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
     (*cur_index)++;
     
-    // create token
     Token tok;
     
     // get name length
@@ -240,178 +258,139 @@ void add_char_token(struct TokenArr* tok_arr, char* code_str, int* cur_index) {
     
     init_tok(&tok, TOK_CHAR, &(code_str[start_index]), ((*cur_index) - start_index));
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_comma_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_COMMA, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_dot_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_DOT, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_semi_colon_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_SEMI_COLON, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_colon_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_COLON, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_plus_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_PLUS, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_minus_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_MINUS, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_asterisk_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_ASTERISK, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_slash_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_SLASH, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_dollar_sign_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_DOLLAR_SIGN, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_at_sign_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_AT_SIGN, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_equals_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_EQUALS, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_open_paren_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_OPEN_PAREN, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_close_paren_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_CLOSE_PAREN, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_open_curly_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_OPEN_CURLY, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_close_curly_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_CLOSE_CURLY, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_open_square_bracket_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_OPEN_SQUARE_BRACKET, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_close_square_bracket_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_CLOSE_SQUARE_BRACKET, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_open_angle_bracket_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_OPEN_ANGLE_BRACKET, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 
 void add_close_angle_bracket_token(struct TokenArr* tok_arr) {
-    // create token
     Token tok;
     init_tok(&tok, TOK_CLOSE_ANGLE_BRACKET, NULL, 0);
     
-    // add token to dynamic token array
     add_tok_to_arr(tok_arr, &tok);
 }
 

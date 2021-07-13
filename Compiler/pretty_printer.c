@@ -4,6 +4,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "string_commons.h"
 
 void print_tokens(TokenArr* tok_arr) {
     
@@ -172,5 +173,10 @@ void print_parse_tree(Program* program_node) {
     if (program_node->entry_point == NULL) printf("NO ENTRY POINT -> INVALID PROGRAM\n");
     else {
         printf("\t-ENTRY_POINT:\n");
+        // print entry point scope contents
+        for (int i = 0; i < program_node->entry_point->scope->amount_of_declarations; i++) {
+            printf("\t\t");
+            print_str_struct(&(program_node->entry_point->scope->declarations[i].identifier));
+        }
     }
 }
