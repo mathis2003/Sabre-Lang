@@ -70,7 +70,6 @@ struct EntryPoint* parse_entry_point() {
     struct EntryPoint* entrypoint = malloc(sizeof(EntryPoint));
     init_void_ptr_arr(&(entrypoint->decl_ptr_arr));
     init_void_ptr_arr(&(entrypoint->stmt_ptr_arr));
-    //entrypoint->scope = parse_scope(NULL);
     eat_token(TOK_OPEN_CURLY);
     
     while (cur_token_ptr->tok_type != TOK_CLOSE_CURLY) {
@@ -103,10 +102,47 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     struct FnLiteral ret_fn_literal;
     /*Initialize ret_scope*/ {
         ret_fn_literal.parent_scope = surrounding_scope;
+        
+        init_void_ptr_arr(&(ret_fn_literal.param_decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.stmt_ptr_arr));
     }
-        
+    
+    // parse function parameters
+    eat_token(TOK_OPEN_PAREN);
+    if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+        do {
+            if (cur_token_ptr->tok_type == TOK_COMMA) next_token();
+            struct Declaration* param_decl_ptr = parse_parameter_declaration();
+            add_void_ptr_to_arr(&(ret_fn_literal.param_decl_ptr_arr), (void*)param_decl_ptr);
+        } while (cur_token_ptr->tok_type == TOK_COMMA);
+    }
+    
+    eat_token(TOK_CLOSE_PAREN);
+    eat_token(TOK_MINUS);
+    eat_token(TOK_CLOSE_ANGLE_BRACKET);
+    
+    // check return type
+    if (str_equals_literal(&(cur_token_ptr->name_str), "u8")) {
+        ret_fn_literal.return_type = UINT_8;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u16")) {
+        ret_fn_literal.return_type = UINT_16;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u32")) {
+        ret_fn_literal.return_type = UINT_32;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "String")) {
+        ret_fn_literal.return_type = STRING;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "fn")) {
+        ret_fn_literal.return_type = FN_PTR;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit")) {
+        ret_fn_literal.return_type = UNIT;
+    } else {
+        // parse error
+    }
+    
+    
+    eat_token(TOK_IDENTIFIER);
+    
+    
     eat_token(TOK_OPEN_CURLY);
     
     while (cur_token_ptr->tok_type != TOK_CLOSE_CURLY) {
@@ -128,6 +164,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             }
                 
         }
+        
     }
     
     eat_token(TOK_CLOSE_CURLY);
@@ -136,6 +173,36 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     
     return ret_fn_literal_ptr;
 }
+
+struct Declaration* parse_parameter_declaration() {
+    Declaration decl;
+    decl.identifier = cur_token_ptr->name_str;
+    eat_token(TOK_IDENTIFIER);
+    eat_token(TOK_COLON);
+    // replace beneath with a switch statement over the possible data types
+    if (str_equals_literal(&(cur_token_ptr->name_str), "u8")) {
+        decl.type = UINT_8;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u16")) {
+        decl.type = UINT_16;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u32")) {
+        decl.type = UINT_32;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "String")) {
+        decl.type = STRING;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "fn")) {
+        decl.type = FN_PTR;
+    } else {
+        // parse error
+    }
+    
+    eat_token(TOK_IDENTIFIER);
+    
+    decl.is_initialized = 0;
+    
+    Declaration* ret_decl_ptr = add_declaration_to_bucket(&decl, ast_root_node->allocators.declaration_bucket);
+    return ret_decl_ptr;
+}
+
+
 
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
     eat_token(TOK_OPEN_ANGLE_BRACKET);
@@ -175,6 +242,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     printf("PARSE ERROR: initialization value is too big to store in a u8");
                     // PARSE ERROR! initialization value is too big to store in a u8
                 }
+                next_token();
                 break;
             }
             case UINT_16: {
@@ -187,6 +255,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     printf("PARSE ERROR: initialization value is too big to store in a u16");
                     // PARSE ERROR! initialization value is too big to store in a u16
                 }
+                next_token();
                 break;
             }
             case UINT_32: {
@@ -199,6 +268,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     printf("PARSE ERROR: initialization value is too big to store in a u32");
                     // PARSE ERROR! initialization value is too big to store in a u8
                 }
+                next_token();
                 break;
             }
             case STRING: {
@@ -207,14 +277,15 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     /*PARSE ERROR! WRONG TYPE FOR INITIALIZATION*/
                 }
                 decl.init_string = cur_token_ptr->name_str;
+                next_token();
                 break;
             }
             case FN_PTR: {
-                if (cur_token_ptr->tok_type != TOK_IDENTIFIER) {
+                if (cur_token_ptr->tok_type != TOK_OPEN_PAREN) {
                     /*PARSE ERROR! WRONG TYPE FOR INITIALIZATION*/
                     printf("PARSE ERROR: WRONG TYPE FOR INITIALIZATION");
                 }
-                eat_token(TOK_OPEN_PAREN);
+                decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                 // parse anonymous function
                 break;
             }
@@ -223,9 +294,8 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             default:
                 break;
         }
-        next_token();
+        
     } else decl.is_initialized = 0;
-    
     eat_token(TOK_CLOSE_ANGLE_BRACKET);
     
     Declaration* ret_decl_ptr = add_declaration_to_bucket(&decl, ast_root_node->allocators.declaration_bucket);

@@ -26,8 +26,11 @@ typedef struct VoidPtrArr {
 typedef struct FnLiteral {
     struct FnLiteral* parent_scope;
     
+    struct VoidPtrArr param_decl_ptr_arr;
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
+    
+    enum DataType return_type;
     
 } FunctionLiteral;
 
@@ -44,7 +47,7 @@ typedef struct Declaration {
         long int init_int_val;
         char init_char_val;
         struct StringStruct init_string;
-        struct FnLiteral init_fn_ptr;
+        struct FnLiteral* init_fn_ptr;
         //...
     };
     
@@ -109,6 +112,7 @@ struct Program* parse_tokens(struct TokenArr* tok_arr);
 void parse_program_node(struct Program* program_node);
 struct EntryPoint* parse_entry_point();
 struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
+struct Declaration* parse_parameter_declaration();
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
 struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
 

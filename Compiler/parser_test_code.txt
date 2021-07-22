@@ -14,7 +14,11 @@ ENTRY_POINT {
 	<my_var : u32 = 53>
 	<MyVar2 : String = "some string">
 	<MyVar3 : u8 = 2>
-	<MyVar4 : u16>
+	<my_fn  : fn = (a : u8, b : Unit) -> u8
+	{
+		<MyVar4 : u16>
+	}>
+
 
 	--------------------
 	---- STATEMENTS ----
