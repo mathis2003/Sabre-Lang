@@ -175,18 +175,38 @@ void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
         switch (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type) {
             case UINT_8: {
                 PRINT_NODE("Type: u8\n", tree_level + 1);
+                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
+                    PRINT_NODE("Init value: ", tree_level + 1);
+                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
+                    printf("\n");
+                }
                 break;
             }
             case UINT_16: {
                 PRINT_NODE("Type: u16\n", tree_level + 1);
+                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
+                    PRINT_NODE("Init value: ", tree_level + 1);
+                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
+                    printf("\n");
+                }
                 break;
             }
             case UINT_32: {
                 PRINT_NODE("Type: u32\n", tree_level + 1);
+                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
+                    PRINT_NODE("Init value: ", tree_level + 1);
+                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
+                    printf("\n");
+                }
                 break;
             }
             case STRING: {
                 PRINT_NODE("Type: String\n", tree_level + 1);
+                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
+                    PRINT_NODE("Init value: \"", tree_level + 1);
+                    print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_string);
+                    printf("\"\n");
+                }
                 break;
             }
                 
@@ -196,8 +216,12 @@ void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
     }
 }
 
-void print_scope(struct Scope* scope, int tree_level) {
-    print_declarations(&(scope->decl_ptr_arr), tree_level+1);
+void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
+    print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
+}
+
+void print_entry_point(struct EntryPoint* entry_point) {
+    print_declarations(&(entry_point->decl_ptr_arr), 2);
 }
 
 void print_parse_tree(Program* program_node) {
@@ -208,9 +232,11 @@ void print_parse_tree(Program* program_node) {
     // Print body
     
     printf("-PROGRAM:\n");
+    /// print entry point
     if (program_node->entry_point == NULL) printf("NO ENTRY POINT -> INVALID PROGRAM\n");
     else {
         PRINT_NODE("-ENTRY_POINT:\n", 1);
-        print_scope(program_node->entry_point->scope, 1);
+        print_entry_point(program_node->entry_point);
     }
+    /// print global declarations
 }

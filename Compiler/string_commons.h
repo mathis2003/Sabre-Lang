@@ -11,5 +11,6 @@ typedef struct StringStruct {
 
 int str_equals_literal(struct StringStruct* str, char* str_literal);
 void print_str_struct(struct StringStruct* str);
+int str_to_int(struct StringStruct* str);
 
 #endif

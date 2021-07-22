@@ -4,17 +4,32 @@
 #include "lexer.h"
 #include "string_commons.h"
 
+
 typedef enum StatementType {
     STMT_ASSIGN
 } StatementType;
 
 typedef enum DataType {
-    UINT_8, UINT_16, UINT_32, STRING
+    UNIT, UINT_8, UINT_16, UINT_32, STRING, FN_PTR
 } DataType;
 
 /*----------------------------------------------------------------------------------------*/
 
 /* Structs */
+
+typedef struct VoidPtrArr {
+    int size, capacity;
+    void** void_ptrs;
+    
+} VoidPtrArr;
+
+typedef struct FnLiteral {
+    struct FnLiteral* parent_scope;
+    
+    struct VoidPtrArr decl_ptr_arr;
+    struct VoidPtrArr stmt_ptr_arr;
+    
+} FunctionLiteral;
 
 typedef struct Statement {
     enum StatementType stmt_type;
@@ -26,42 +41,32 @@ typedef struct Declaration {
     
     char is_initialized;
     union {
-        int init_int_val;
+        long int init_int_val;
         char init_char_val;
+        struct StringStruct init_string;
+        struct FnLiteral init_fn_ptr;
         //...
     };
+    
 } Declaration;
 
 
-typedef struct VoidPtrArr {
-    int size, capacity;
-    void** void_ptrs;
-    
-} VoidPtrArr;
-
-typedef struct Scope {
-    struct Scope* parent_scope;
+typedef struct EntryPoint {
+    //struct Scope* scope;
     
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
-    
-} Scope;
-
-
-
-typedef struct EntryPoint {
-    struct Scope* scope;
 } EntryPoint;
 
 typedef struct Allocators {
-    struct MainScopeBucket* scope_bucket;
+    struct MainFnLiteralBucket* fn_literal_bucket;
     struct MainDeclarationBucket* declaration_bucket;
     // also add buckets for data declarations and statements here
 } Allocators;
 
 typedef struct Program {
     struct EntryPoint* entry_point;
-    struct Scope* global_scope;
+    struct VoidPtrArr decl_ptr_arr;
     
     struct Allocators allocators;
 } Program;
@@ -70,17 +75,17 @@ typedef struct Program {
 /*----------------------------------------------------------------------------------------*/
 
 // this should be visible to the programmer
-typedef struct MainScopeBucket {
-    struct ScopeBucket* root_bucket;
-} MainScopeBucket;
+typedef struct MainFnLiteralBucket {
+    struct FnLiteralBucket* root_bucket;
+} MainFnLiteralBucket;
 
 // this should be hidden from the programmer
-typedef struct ScopeBucket {
+typedef struct FnLiteralBucket {
     int size, capacity;
-    struct Scope* scopes;
-    struct ScopeBucket* next_bucket;
-    struct ScopeBucket* prev_bucket;
-} ScopeBucket;
+    struct FnLiteral* fn_literals;
+    struct FnLiteralBucket* next_bucket;
+    struct FnLiteralBucket* prev_bucket;
+} FnLiteralBucket;
 
 // this should be visible to the programmer
 typedef struct MainDeclarationBucket {
@@ -103,8 +108,9 @@ struct Program* parse_tokens(struct TokenArr* tok_arr);
 
 void parse_program_node(struct Program* program_node);
 struct EntryPoint* parse_entry_point();
-struct Scope* parse_scope(struct Scope* surrounding_scope);
-struct Declaration* parse_declaration();
+struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
+struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
+struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
 
 struct Token* next_token();
 struct Token* peek_token();
@@ -117,9 +123,9 @@ void init_ast_allocators(Program* program_ptr);
 
 /*----------------------------------------------------------------------------------------*/
 
-struct Scope* add_scope_to_bucket(struct Scope* scope_to_add, struct MainScopeBucket* scope_bucket);
-void init_main_scope_bucket(struct Program* program);
-void free_scope_bucket(MainScopeBucket* scope_bucket);
+struct FnLiteral* add_fn_literal_to_bucket(struct FnLiteral* fn_to_add, struct MainFnLiteralBucket* fn_bucket);
+void init_main_fn_literal_bucket(struct Program* program);
+void free_fn_literal_bucket(MainFnLiteralBucket* fn_literal_bucket);
 
 struct Declaration* add_declaration_to_bucket(struct Declaration* declaration_to_add, struct MainDeclarationBucket* declaration_bucket);
 void init_main_declaration_bucket(struct Program* program);

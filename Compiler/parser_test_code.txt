@@ -1,13 +1,24 @@
 
 ENTRY_POINT {
 	|"" 
-	code comes
-	in this scope
+	this
+	|""
+	is
 	""|
-	
-	<my_var : u32>
-	<MyVar2 : String>
-	<MyVar3 : u8>
+	a nested comment
+	""|
+
+	--------------------
+	----DECLARATIONS----
+	--------------------	
+	<my_var : u32 = 53>
+	<MyVar2 : String = "some string">
+	<MyVar3 : u8 = 2>
 	<MyVar4 : u16>
+
+	--------------------
+	---- STATEMENTS ----
+	--------------------
+
 
 }

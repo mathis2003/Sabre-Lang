@@ -17,3 +17,14 @@ void print_str_struct(struct StringStruct* str) {
     for (int i = 0; i < str->str_length; i++)
         printf("%c", str->str_start[i]);
 }
+
+int str_to_int(struct StringStruct* str) {
+    int ret_val = 0;
+    
+    for (int i = 0; i < str->str_length; i++) {
+        ret_val *= 10;
+        ret_val += str->str_start[i] - '0';
+    }
+    
+    return ret_val;
+}
