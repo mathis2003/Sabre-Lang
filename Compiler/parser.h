@@ -20,16 +20,6 @@ typedef struct Statement {
     enum StatementType stmt_type;
 } Statement;
 
-typedef struct Scope {
-    struct Scope* parent_scope;
-    
-    int amount_of_nested_scopes;
-    struct Scope* scopes;
-    
-    int amount_of_declarations;
-    struct Declaration* declarations;
-} Scope;
-
 typedef struct Declaration {
     struct StringStruct identifier;
     enum DataType type;
@@ -41,6 +31,23 @@ typedef struct Declaration {
         //...
     };
 } Declaration;
+
+
+typedef struct VoidPtrArr {
+    int size, capacity;
+    void** void_ptrs;
+    
+} VoidPtrArr;
+
+typedef struct Scope {
+    struct Scope* parent_scope;
+    
+    struct VoidPtrArr decl_ptr_arr;
+    struct VoidPtrArr stmt_ptr_arr;
+    
+} Scope;
+
+
 
 typedef struct EntryPoint {
     struct Scope* scope;
@@ -95,7 +102,8 @@ typedef struct DeclarationBucket {
 struct Program* parse_tokens(struct TokenArr* tok_arr);
 
 void parse_program_node(struct Program* program_node);
-struct Scope* parse_scope();
+struct EntryPoint* parse_entry_point();
+struct Scope* parse_scope(struct Scope* surrounding_scope);
 struct Declaration* parse_declaration();
 
 struct Token* next_token();
@@ -117,6 +125,8 @@ struct Declaration* add_declaration_to_bucket(struct Declaration* declaration_to
 void init_main_declaration_bucket(struct Program* program);
 void free_declaration_bucket(MainDeclarationBucket* declaration_bucket);
 
-
+void init_void_ptr_arr(struct VoidPtrArr* void_ptr_arr);
+void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add);
+void free_void_ptr_arr(struct VoidPtrArr* void_ptr_arr);
 
 #endif

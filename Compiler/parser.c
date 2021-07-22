@@ -49,52 +49,60 @@ void parse_program_node(struct Program* program_node) {
     program_node->entry_point = NULL;
     
     while (cur_token_ptr != NULL) {
-        if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
-            if (str_equals_literal(&(cur_token_ptr->name_str), "ENTRY_POINT")){
-                eat_token(TOK_IDENTIFIER);
-                struct EntryPoint* entrypoint = malloc(sizeof(EntryPoint));
-                program_node->entry_point = entrypoint;
-                Declaration* params_decl;
-                eat_token(TOK_OPEN_PAREN);
-                
-                // args should be added to the symbol table, for now however, just skip over it
-                if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET) {
-                    
-                    params_decl = parse_declaration();
-                    
-                    // add declaration to tree
-                } else { return; /* NOOO!!! PARSE ERROR!!! */ }
-                
-                eat_token(TOK_OPEN_SQUARE_BRACKET);
-                eat_token(TOK_CLOSE_SQUARE_BRACKET);
-                
-                
-                eat_token(TOK_CLOSE_PAREN);
-                
-                entrypoint->scope = parse_scope();
-                
-                entrypoint->scope->declarations =  params_decl;
-                entrypoint->scope->amount_of_declarations = 1;
-                
-                
-            }
+        // program is made of declarations, scopes, statements and an entrypoint
+        
+        if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET) {
+            // parse declaration
+        }
+        else if (str_equals_literal(&(cur_token_ptr->name_str), "ENTRY_POINT")) {
+            EntryPoint* entrypoint = parse_entry_point();
+            program_node->entry_point = entrypoint;
+        }
+        else {
+            // parse error
         }
         next_token();
     }
 }
 
-struct Scope* parse_scope() {
-    // TODO: replace the malloc below with a custom allocator
+struct EntryPoint* parse_entry_point() {
+    eat_token(TOK_IDENTIFIER);
+    struct EntryPoint* entrypoint = malloc(sizeof(EntryPoint));
+    entrypoint->scope = parse_scope(NULL);
+    return entrypoint;
+}
+
+struct Scope* parse_scope(struct Scope* surrounding_scope) {
     Scope ret_scope;
-    // TODO: clean up initializing
-    ret_scope.parent_scope = NULL;
-    ret_scope.amount_of_nested_scopes = 0;
-    ret_scope.amount_of_declarations = 0;
-    
+    /*Initialize ret_scope*/ {
+        ret_scope.parent_scope = surrounding_scope;
+        init_void_ptr_arr(&(ret_scope.decl_ptr_arr));
+        init_void_ptr_arr(&(ret_scope.stmt_ptr_arr));
+    }
+        
     eat_token(TOK_OPEN_CURLY);
-    // check for declarations/initializations of function pointers, integers, and other variables...
-    // check for statements
-    // nested scopes might be encountered in both statements as well as in initializations
+    
+    while (cur_token_ptr->tok_type != TOK_CLOSE_CURLY) {
+        switch (cur_token_ptr->tok_type) {
+            case TOK_OPEN_ANGLE_BRACKET: {
+                struct Declaration* decl_ptr = parse_declaration();
+                add_void_ptr_to_arr(&(ret_scope.decl_ptr_arr), (void*)decl_ptr);
+                break;
+            }
+            case TOK_IDENTIFIER: {
+                // statement found
+                //<#statements#>
+                break;
+            }
+                
+            default: {
+                // parse error
+                break;
+            }
+                
+        }
+    }
+    
     eat_token(TOK_CLOSE_CURLY);
     
     Scope* ret_scope_ptr = add_scope_to_bucket(&ret_scope, ast_root_node->allocators.scope_bucket);
@@ -108,9 +116,25 @@ struct Declaration* parse_declaration() {
     decl.identifier = cur_token_ptr->name_str;
     eat_token(TOK_IDENTIFIER);
     eat_token(TOK_COLON);
-    //if (cur_token_ptr->name_str.str_length != 0 && str_equals_literal(&cur_token_ptr->name_str, "String") == 0) { return; /* NOOO!!! PARSE ERROR!!! */ }
-    decl.type = STRING;
+    // replace beneath with a switch statement over the possible data types
+    if (str_equals_literal(&(cur_token_ptr->name_str), "u8")) {
+        decl.type = UINT_8;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u16")) {
+        decl.type = UINT_16;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "u32")) {
+        decl.type = UINT_32;
+    } else if (str_equals_literal(&(cur_token_ptr->name_str), "String")) {
+        decl.type = STRING;
+    } else {
+        // parse error
+    }
+    
     eat_token(TOK_IDENTIFIER);
+    /*check for initialization values*/ {
+    
+    }
+    
+    eat_token(TOK_CLOSE_ANGLE_BRACKET);
     
     Declaration* ret_decl_ptr = add_declaration_to_bucket(&decl, ast_root_node->allocators.declaration_bucket);
     return ret_decl_ptr;

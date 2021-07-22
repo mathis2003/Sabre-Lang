@@ -162,6 +162,44 @@ void print_tokens(TokenArr* tok_arr) {
     }
 }
 
+#define PRINT_NODE(node_name, tree_level) \
+for (int i = 0; i < tree_level; i++) printf("    "); \
+printf("%s", node_name);
+
+void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
+    for (int i = 0; i < decl_ptr_arr->size; i++) {
+        PRINT_NODE("-DECLARATION\n", tree_level);
+        PRINT_NODE("Name: ", tree_level + 1);
+        print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->identifier);
+        printf("\n");
+        switch (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type) {
+            case UINT_8: {
+                PRINT_NODE("Type: u8\n", tree_level + 1);
+                break;
+            }
+            case UINT_16: {
+                PRINT_NODE("Type: u16\n", tree_level + 1);
+                break;
+            }
+            case UINT_32: {
+                PRINT_NODE("Type: u32\n", tree_level + 1);
+                break;
+            }
+            case STRING: {
+                PRINT_NODE("Type: String\n", tree_level + 1);
+                break;
+            }
+                
+            default:
+                break;
+        }
+    }
+}
+
+void print_scope(struct Scope* scope, int tree_level) {
+    print_declarations(&(scope->decl_ptr_arr), tree_level+1);
+}
+
 void print_parse_tree(Program* program_node) {
     
     // Print header
@@ -172,11 +210,7 @@ void print_parse_tree(Program* program_node) {
     printf("-PROGRAM:\n");
     if (program_node->entry_point == NULL) printf("NO ENTRY POINT -> INVALID PROGRAM\n");
     else {
-        printf("\t-ENTRY_POINT:\n");
-        // print entry point scope contents
-        for (int i = 0; i < program_node->entry_point->scope->amount_of_declarations; i++) {
-            printf("\t\t");
-            print_str_struct(&(program_node->entry_point->scope->declarations[i].identifier));
-        }
+        PRINT_NODE("-ENTRY_POINT:\n", 1);
+        print_scope(program_node->entry_point->scope, 1);
     }
 }

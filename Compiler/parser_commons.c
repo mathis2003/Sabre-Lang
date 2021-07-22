@@ -201,3 +201,33 @@ void free_declaration_bucket(MainDeclarationBucket* declaration_bucket) {
 // STATEMENT NODES ALLOCATOR
 // --------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------
+
+
+
+
+
+// --------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------
+// VOID POINTER ARRAY ALLOCATOR
+// --------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------
+
+void init_void_ptr_arr(struct VoidPtrArr* void_ptr_arr) {
+    void_ptr_arr->size = 0;
+    void_ptr_arr->capacity = 10;
+    void_ptr_arr->void_ptrs = malloc(void_ptr_arr->capacity * sizeof(void*));
+}
+
+void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add) {
+    if (void_ptr_arr->size >= void_ptr_arr->capacity) {
+        void_ptr_arr->capacity *= 2;
+        void_ptr_arr->void_ptrs = realloc(void_ptr_arr->void_ptrs, void_ptr_arr->capacity * sizeof(void*));
+    }
+    void_ptr_arr->void_ptrs[void_ptr_arr->size] = ptr_to_add;
+    void_ptr_arr->size += 1;
+}
+
+void free_void_ptr_arr(struct VoidPtrArr* void_ptr_arr) {
+    free(void_ptr_arr->void_ptrs);
+    free(void_ptr_arr);
+}

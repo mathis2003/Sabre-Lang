@@ -1,8 +1,13 @@
 
-ENTRY_POINT(<args : String[]>) {
+ENTRY_POINT {
 	|"" 
 	code comes
 	in this scope
 	""|
+	
+	<my_var : u32>
+	<MyVar2 : String>
+	<MyVar3 : u8>
+	<MyVar4 : u16>
 
 }
