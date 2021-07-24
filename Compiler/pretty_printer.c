@@ -110,6 +110,16 @@ void print_tokens(TokenArr* tok_arr) {
                 break;
             }
             
+            case TOK_AMPERSAND: {
+                printf("TOK_AMPERSAND\n");
+                break;
+            }
+            
+            case TOK_PIPE: {
+                printf("TOK_PIPE\n");
+                break;
+            }
+            
             case TOK_EQUALS: {
                 printf("TOK_EQUALS\n");
                 break;
@@ -168,9 +178,139 @@ printf("%s", node_name);
 
 void print_fn_literal(struct FnLiteral* fn_literal, int tree_level);
 
+void print_expression(Expression* expr, int tree_level) {
+    printf("\n");
+    PRINT_NODE("-EXPRESSION:\n", tree_level);
+    switch (expr->expr_type) {
+        case EXPR_ADD: {
+            PRINT_NODE("type: add\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_SUB: {
+            PRINT_NODE("type: sub\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_MULT: {
+            PRINT_NODE("type: mult\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_DIV: {
+            PRINT_NODE("type: div\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_LOGIC_AND: {
+            PRINT_NODE("type: logic and\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_LOGIC_OR: {
+            PRINT_NODE("type: logic or\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_COND_EQUALS: {
+            PRINT_NODE("type: equals condition\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_COND_GREATER_EQUALS: {
+            PRINT_NODE("type: greater or equals condition\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_COND_LOWER_EQUALS: {
+            PRINT_NODE("type: lower or equals condition\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_COND_GREATER: {
+            PRINT_NODE("type: greater condition\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        case EXPR_COND_LOWER: {
+            PRINT_NODE("type: lower condition\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->bin_op.left, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->bin_op.right, tree_level+1);
+            break;
+        }
+        
+            
+        /* also put function call, if expression, ... here */
+        
+        case EXPR_VAR_LITERAL: {
+            PRINT_NODE("type: variable value\n", tree_level+1);
+            PRINT_NODE("variable: ", tree_level+1);
+            print_str_struct(&(expr->variable_literal));
+            break;
+        }
+        case EXPR_NUM_LITERAL: {
+            PRINT_NODE("type: number literal\n", tree_level+1);
+            PRINT_NODE("number: ", tree_level+1);
+            printf("%ld\n", expr->int_literal);
+            break;
+        }
+            
+        default:
+            break;
+    }
+}
+
+void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
+    for (int i = 0; i < stmt_ptr_arr->size; i++) {
+        printf("\n");
+        PRINT_NODE("-STATEMENT:\n", tree_level);
+        switch (((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->stmt_type) {
+            case STMT_EXPR: {
+                print_expression(((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->expr, tree_level+1);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
 void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
     for (int i = 0; i < decl_ptr_arr->size; i++) {
-        PRINT_NODE("-DECLARATION\n", tree_level);
+        printf("\n");
+        PRINT_NODE("-DECLARATION:\n", tree_level);
         PRINT_NODE("Name: ", tree_level + 1);
         print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->identifier);
         printf("\n");
@@ -294,10 +434,12 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
 
     
     print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
+    print_statements(&(fn_literal->stmt_ptr_arr), tree_level+1);
 }
 
 void print_entry_point(struct EntryPoint* entry_point) {
     print_declarations(&(entry_point->decl_ptr_arr), 2);
+    print_statements(&(entry_point->decl_ptr_arr), 2);
 }
 
 void print_parse_tree(Program* program_node) {
@@ -309,10 +451,12 @@ void print_parse_tree(Program* program_node) {
     
     printf("-PROGRAM:\n");
     /// print entry point
-    if (program_node->entry_point == NULL) printf("NO ENTRY POINT -> INVALID PROGRAM\n");
+    if (program_node->entry_point == NULL) printf("NO ENTRY POINT => INVALID PROGRAM\n");
     else {
+        printf("\n");
         PRINT_NODE("-ENTRY_POINT:\n", 1);
         print_entry_point(program_node->entry_point);
     }
     /// print global declarations
+    print_declarations(&(program_node->decl_ptr_arr), 1);
 }

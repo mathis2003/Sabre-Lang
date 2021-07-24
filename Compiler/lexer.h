@@ -4,12 +4,13 @@
 #include "string_commons.h"
 
 typedef enum TokenType {
-	TOK_IDENTIFIER, TOK_NUMBER, TOK_STRING, TOK_CHAR, TOK_COMMA, TOK_DOT, TOK_SEMI_COLON, TOK_COLON,
+	TOK_IDENTIFIER, TOK_NUMBER, TOK_BOOL, TOK_STRING, TOK_CHAR, TOK_COMMA, TOK_DOT, TOK_SEMI_COLON, TOK_COLON,
     TOK_PLUS, TOK_MINUS, TOK_ASTERISK, TOK_SLASH, TOK_DOLLAR_SIGN, TOK_AT_SIGN,
     TOK_EQUALS,
     TOK_OPEN_PAREN, TOK_CLOSE_PAREN, TOK_OPEN_CURLY, TOK_CLOSE_CURLY, TOK_OPEN_SQUARE_BRACKET,
     TOK_CLOSE_SQUARE_BRACKET, TOK_OPEN_ANGLE_BRACKET, TOK_CLOSE_ANGLE_BRACKET,
     
+    TOK_AMPERSAND, TOK_PIPE,
     // KEYWORDS
     TOK_KEYWORD_I8, TOK_KEYWORD_I16, TOK_KEYWORD_I32, TOK_KEYWORD_CHAR, TOK_KEYWORD_STRING, TOK_KEYWORD_FN, TOK_KEYWORD_IF, TOK_KEYWORD_ELSE,
 } TokenType;
@@ -63,6 +64,8 @@ void add_asterisk_token(struct TokenArr* tok_arr);
 void add_slash_token(struct TokenArr* tok_arr);
 void add_dollar_sign_token(struct TokenArr* tok_arr);
 void add_at_sign_token(struct TokenArr* tok_arr);
+void add_ampersand_token(struct TokenArr* tok_arr);
+void add_pipe_token(struct TokenArr* tok_arr);
 void add_equals_token(struct TokenArr* tok_arr);
 void add_open_paren_token(struct TokenArr* tok_arr);
 void add_close_paren_token(struct TokenArr* tok_arr);

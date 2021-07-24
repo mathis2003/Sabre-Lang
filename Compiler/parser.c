@@ -46,13 +46,17 @@ struct Program* parse_tokens(struct TokenArr* tok_arr) {
 /*-------------------------------------------------------------------------------*/
 
 void parse_program_node(struct Program* program_node) {
-    program_node->entry_point = NULL;
+    /* INIT PROGRAM NODE */ {
+        program_node->entry_point = NULL;
+        init_void_ptr_arr(&(program_node->decl_ptr_arr));
+    }
+    
+    
     
     while (cur_token_ptr != NULL) {
-        // program is made of declarations, scopes, statements and an entrypoint
-        
         if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET) {
-            // parse declaration
+            struct Declaration* decl_ptr = parse_declaration(NULL);
+            add_void_ptr_to_arr(&(program_node->decl_ptr_arr), (void*)decl_ptr);
         }
         else if (str_equals_literal(&(cur_token_ptr->name_str), "ENTRY_POINT")) {
             EntryPoint* entrypoint = parse_entry_point();
@@ -61,7 +65,8 @@ void parse_program_node(struct Program* program_node) {
         else {
             // parse error
         }
-        next_token();
+        
+        
     }
 }
 
@@ -79,8 +84,15 @@ struct EntryPoint* parse_entry_point() {
                 add_void_ptr_to_arr(&(entrypoint->decl_ptr_arr), (void*)decl_ptr);
                 break;
             }
+            case TOK_NUMBER:
             case TOK_IDENTIFIER: {
-                // statement found
+                struct Statement* stmt_ptr = parse_statement(NULL);
+                add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
+                eat_token(TOK_SEMI_COLON);
+                break;
+            }
+            case TOK_EQUALS: {
+                // control flow indicator found
                 //<#statements#>
                 break;
             }
@@ -152,8 +164,15 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
                 add_void_ptr_to_arr(&(ret_fn_literal.decl_ptr_arr), (void*)decl_ptr);
                 break;
             }
+            case TOK_NUMBER:
             case TOK_IDENTIFIER: {
-                // statement found
+                struct Statement* stmt_ptr = parse_statement(surrounding_scope);
+                add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
+                eat_token(TOK_SEMI_COLON);
+                break;
+            }
+            case TOK_EQUALS: {
+                // control flow indicator found
                 //<#statements#>
                 break;
             }
@@ -286,7 +305,6 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     printf("PARSE ERROR: WRONG TYPE FOR INITIALIZATION");
                 }
                 decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-                // parse anonymous function
                 break;
             }
             
@@ -302,21 +320,229 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
     return ret_decl_ptr;
 }
 
-struct Statement* parse_statement (struct FnLiteral* surrounding_scope) {
+
+struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
+    Statement stmt;
     
-    Statement* ret_stmt_ptr;
+    // parse here
+    if (cur_token_ptr->tok_type == TOK_NUMBER) {
+        stmt.stmt_type = STMT_EXPR;
+        stmt.expr = parse_expression();
+    } else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+        if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
+            // parse if expression
+            stmt.stmt_type = STMT_EXPR;
+            stmt.expr = parse_expression();
+        }
+    } else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+        stmt.stmt_type = STMT_EXPR;
+        stmt.expr = parse_expression();
+    }
+    
+    
+    struct Statement* ret_stmt_ptr = add_statement_to_bucket(&stmt, ast_root_node->allocators.statement_bucket);
     return ret_stmt_ptr;
 }
 
 
+/*-------------------------------------------------------------------------------*/
+/* EXPRESSION PARSING                                                            */
+/*-------------------------------------------------------------------------------*/
+struct Expression* parse_expression() {
+    Expression* expr_ptr;
+    
+    
+    if (cur_token_ptr->tok_type == TOK_NUMBER || cur_token_ptr->tok_type == TOK_BOOL) {
+        // parse boolean operand
+        expr_ptr = parse_logic_expr();
+        
+    }
+    else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+        if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
+            // parse if expression
+            ;
+        } else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit")) {
+            // parse anonymous function call expression
+            ;
+        }
+    }
+    //Expression* expr_ptr = add_expression_to_bucket(&expr, ast_root_node->allocators.expression_bucket);
+    return expr_ptr;
+}
 
+struct Expression* parse_logic_expr() {
+    Expression* left_expr = parse_bool_term();
+    
+    while (cur_token_ptr->tok_type == TOK_AMPERSAND || cur_token_ptr->tok_type == TOK_PIPE) {
+        Expression parent_expr;
+        Expression* right_expr;
+        
+        
+        if (cur_token_ptr->tok_type == TOK_AMPERSAND && peek_token()->tok_type == TOK_AMPERSAND) {
+            parent_expr.expr_type = EXPR_LOGIC_AND;
+            next_token();
+            next_token();
+        } else if (cur_token_ptr->tok_type == TOK_PIPE && peek_token()->tok_type == TOK_PIPE) {
+            parent_expr.expr_type = EXPR_LOGIC_OR;
+            next_token();
+            next_token();
+        } else {
+            // parse error
+        }
+        
+        right_expr = parse_bool_term();
+        
+        parent_expr.bin_op.left = left_expr;
+        parent_expr.bin_op.right = right_expr;
+        
+        left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
+    }
+    
+    return left_expr;
+}
+
+struct Expression* parse_bool_term() {
+    Expression* left_expr = parse_cond_term();
+    
+    while (cur_token_ptr->tok_type == TOK_EQUALS || cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET || cur_token_ptr->tok_type == TOK_CLOSE_ANGLE_BRACKET) {
+        Expression parent_expr;
+        Expression* right_expr;
+        
+        
+        if (cur_token_ptr->tok_type == TOK_EQUALS && peek_token()->tok_type == TOK_EQUALS) {
+            parent_expr.expr_type = EXPR_COND_EQUALS;
+            next_token();
+            next_token();
+        } else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET && peek_token()->tok_type == TOK_EQUALS) {
+            parent_expr.expr_type = EXPR_COND_LOWER_EQUALS;
+            next_token();
+            next_token();
+        } else if (cur_token_ptr->tok_type == TOK_CLOSE_ANGLE_BRACKET && peek_token()->tok_type == TOK_EQUALS) {
+            parent_expr.expr_type = EXPR_COND_GREATER_EQUALS;
+            next_token();
+            next_token();
+        }
+        else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET) {
+            parent_expr.expr_type = EXPR_COND_LOWER;
+            next_token();
+        }
+        else if (cur_token_ptr->tok_type == TOK_CLOSE_ANGLE_BRACKET) {
+            parent_expr.expr_type = EXPR_COND_GREATER;
+            next_token();
+        }
+        
+        right_expr = parse_cond_term();
+        
+        parent_expr.bin_op.left = left_expr;
+        parent_expr.bin_op.right = right_expr;
+        
+        left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
+    }
+    
+    return left_expr;
+    
+}
+
+struct Expression* parse_cond_term() {
+    Expression* left_expr = parse_arith_term();
+    
+    while (cur_token_ptr->tok_type == TOK_PLUS || cur_token_ptr->tok_type == TOK_MINUS) {
+        Expression parent_expr;
+        Expression* right_expr;
+        
+        
+        if (cur_token_ptr->tok_type == TOK_PLUS) {
+            parent_expr.expr_type = EXPR_ADD;
+            next_token();
+        } else if (cur_token_ptr->tok_type == TOK_MINUS) {
+            parent_expr.expr_type = EXPR_SUB;
+            next_token();
+        } else {
+            // parse error
+            break;
+        }
+        
+        right_expr = parse_arith_term();
+        
+        parent_expr.bin_op.left = left_expr;
+        parent_expr.bin_op.right = right_expr;
+        
+        left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
+    }
+    
+    return left_expr;
+}
+
+struct Expression* parse_arith_term() {
+    Expression* left_expr = parse_factor();
+    
+    while (cur_token_ptr->tok_type == TOK_ASTERISK || cur_token_ptr->tok_type == TOK_SLASH) {
+        Expression parent_expr;
+        Expression* right_expr;
+        
+        
+        if (cur_token_ptr->tok_type == TOK_ASTERISK) {
+            parent_expr.expr_type = EXPR_MULT;
+            next_token();
+        } else if (cur_token_ptr->tok_type == TOK_SLASH) {
+            parent_expr.expr_type = EXPR_DIV;
+            next_token();
+        } else {
+            // parse error
+            break;
+        }
+        
+        right_expr = parse_factor();
+        
+        parent_expr.bin_op.left = left_expr;
+        parent_expr.bin_op.right = right_expr;
+        
+        left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
+    }
+    
+    return left_expr;
+}
+
+struct Expression* parse_factor() {
+    Expression* ret_expr;
+    // basically, the options here are: an expression between parentheses, a function call, or a literal
+    if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+        if (peek_token()->tok_type == TOK_OPEN_PAREN) {
+            // parse function call
+            ;
+        }
+        else {
+            // parse variable
+            struct Expression var_literal_expr;
+            var_literal_expr.expr_type = EXPR_VAR_LITERAL;
+            var_literal_expr.variable_literal = cur_token_ptr->name_str;
+            ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
+            next_token();
+        }
+    }
+    else if (cur_token_ptr->tok_type == TOK_NUMBER) {
+        struct Expression number_literal_expr;
+        number_literal_expr.expr_type = EXPR_NUM_LITERAL;
+        number_literal_expr.int_literal = str_to_int(&cur_token_ptr->name_str);
+        ret_expr = add_expression_to_bucket(&number_literal_expr, ast_root_node->allocators.expression_bucket);
+        next_token();
+    }
+    else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+        // parse parenthesized expression
+        next_token();
+        ret_expr = parse_expression();
+        eat_token(TOK_CLOSE_PAREN);
+    }
+    
+    return ret_expr;
+}
 
 /*-------------------------------------------------------------------------------*/
 
 int cur_token_index = 0;
 
 struct Token* next_token() {
-    if (cur_token_index >= tok_arr_ptr->size) return (cur_token_ptr = NULL); // exception!!!
+    if (cur_token_index+1 >= tok_arr_ptr->size) return (cur_token_ptr = NULL); // exception!!!
     cur_token_index++;
     return (cur_token_ptr = &(tok_arr_ptr->tokens[cur_token_index]));
 }
@@ -343,11 +569,19 @@ struct Token* cur_token() {
 // the Program and the EntryPoint struct are malloc'd once, since they only occur once, and must therefore be separatly freed
 
 void free_AST(struct Program* ast_root) {
+    // free entrypoint
+    free_void_ptr_arr(&ast_root->entry_point->decl_ptr_arr);
+    free_void_ptr_arr(&ast_root->entry_point->stmt_ptr_arr);
     free(ast_root->entry_point);
-    free_void_ptr_arr(&ast_root->decl_ptr_arr);
-    // might need to free allocators here too, although i'm not sure rn, perhaps the nodes are necessary or smth
-    // free all nested scopes in global scope
     
+    // free global decl pointer array
+    free_void_ptr_arr(&ast_root->decl_ptr_arr);
+    
+    // free the space of FnLiterals, Declarations, Statements and Expressions
+    free_fn_literal_bucket(ast_root->allocators.fn_literal_bucket);
+    free_declaration_bucket(ast_root->allocators.declaration_bucket);
+    free_statement_bucket(ast_root->allocators.statement_bucket);
+    free_expression_bucket(ast_root->allocators.expression_bucket);
     
     free(ast_root);
 }
@@ -358,5 +592,7 @@ void free_AST(struct Program* ast_root) {
 void init_ast_allocators(Program* program_ptr) {
     init_main_fn_literal_bucket(program_ptr);
     init_main_declaration_bucket(program_ptr);
-    // also init other allocators here
+    init_main_statement_bucket(program_ptr);
+    init_main_expression_bucket(program_ptr);
+    // also init expression allocator here
 }

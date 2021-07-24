@@ -1,5 +1,8 @@
 
+< global_var1 : u32 >
+
 ENTRY_POINT {
+
 	|"" 
 	this
 	|""
@@ -10,15 +13,14 @@ ENTRY_POINT {
 
 	--------------------
 	----DECLARATIONS----
-	--------------------	
-	<my_var : u32 = 53>
-	<MyVar2 : String = "some string">
-	<MyVar3 : u8 = 2>
+	--------------------
+	
+	--<my_var : u32 = 53>
+	--<MyVar2 : String = "some string">
 	<my_fn  : fn = (a : u8, b : Unit) -> u8
 	{
-		<MyVar4 : u16>
+		1 + 2 * 3 + 4;
 	}>
-
 
 	--------------------
 	---- STATEMENTS ----
@@ -26,3 +28,5 @@ ENTRY_POINT {
 
 
 }
+
+< global_var2 : u8 = 32>

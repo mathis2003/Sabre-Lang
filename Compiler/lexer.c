@@ -116,6 +116,8 @@ TokenArr* lex_code(char* file_name) {
         else if (code_string[i] == '/')                                                  { add_slash_token(result_tok_arr);                       continue; }
         else if (code_string[i] == '$')                                                  { add_dollar_sign_token(result_tok_arr);                 continue; }
         else if (code_string[i] == '@')                                                  { add_at_sign_token(result_tok_arr);                     continue; }
+        else if (code_string[i] == '&')                                                  { add_ampersand_token(result_tok_arr);                   continue; }
+        else if (code_string[i] == '|')                                                  { add_pipe_token(result_tok_arr);                        continue; }
         else if (code_string[i] == '=')                                                  { add_equals_token(result_tok_arr);                      continue; }
         else if (code_string[i] == '(')                                                  { add_open_paren_token(result_tok_arr);                  continue; }
         else if (code_string[i] == ')')                                                  { add_close_paren_token(result_tok_arr);                 continue; }
@@ -327,6 +329,20 @@ void add_dollar_sign_token(struct TokenArr* tok_arr) {
 void add_at_sign_token(struct TokenArr* tok_arr) {
     Token tok;
     init_tok(&tok, TOK_AT_SIGN, NULL, 0);
+    
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_ampersand_token(struct TokenArr* tok_arr) {
+    Token tok;
+    init_tok(&tok, TOK_AMPERSAND, NULL, 0);
+    
+    add_tok_to_arr(tok_arr, &tok);
+}
+
+void add_pipe_token(struct TokenArr* tok_arr) {
+    Token tok;
+    init_tok(&tok, TOK_PIPE, NULL, 0);
     
     add_tok_to_arr(tok_arr, &tok);
 }
