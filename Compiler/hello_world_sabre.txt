@@ -1,0 +1,6 @@
+
+printf("Hello, World!\n");
+
+import {
+	* "stdio.h"
+}
