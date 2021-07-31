@@ -6,10 +6,10 @@
 
 
 typedef enum ExpressionType {
-    /*EXPR_LITERAL, */EXPR_ADD, EXPR_SUB, EXPR_MULT, EXPR_DIV, EXPR_IF_THEN_ELSE, EXPR_FN_CALL,
+    EXPR_ADD, EXPR_SUB, EXPR_MULT, EXPR_DIV, EXPR_IF_THEN_ELSE, EXPR_FN_CALL,
     EXPR_LOGIC_AND, EXPR_LOGIC_OR,
     EXPR_COND_EQUALS, EXPR_COND_GREATER_EQUALS, EXPR_COND_LOWER_EQUALS, EXPR_COND_GREATER, EXPR_COND_LOWER,
-    EXPR_VAR_LITERAL, EXPR_NUM_LITERAL
+    EXPR_VAR_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL
     
 } ExpressionType;
 
@@ -44,6 +44,12 @@ typedef struct FnLiteral {
     
 } FunctionLiteral;
 
+typedef struct FnCall {
+    struct Expression* fn_ptr_expr;
+    
+    struct VoidPtrArr arg_ptr_arr;
+} FnCall;
+
 typedef struct TernOp {
     struct Expression* left;
     struct Expression* middle;
@@ -69,8 +75,11 @@ typedef struct Expression {
         struct BinOp        bin_op;
         // ternop
         struct TernOp       tern_op;
-        // fn call
+        // fn literal
         struct FnLiteral*   fn_literal;
+        // fn call
+        struct FnCall       fn_call;
+        
         
     };
     
@@ -197,6 +206,7 @@ struct Expression* parse_bool_term();
 struct Expression* parse_cond_term();
 struct Expression* parse_arith_term();
 struct Expression* parse_factor();
+struct Expression* parse_fn_call_expr(Expression* fn_ptr);
 
 struct Token* next_token();
 struct Token* peek_token();

@@ -285,6 +285,20 @@ void print_expression(Expression* expr, int tree_level) {
             break;
         }
         
+        case EXPR_FN_CALL: {
+            PRINT_NODE("type: function call\n", tree_level+1);
+            PRINT_NODE("function pointer: ", tree_level+1);
+            print_expression(expr->fn_call.fn_ptr_expr, tree_level+1);
+            PRINT_NODE("argument list: ", tree_level+1);
+            if (expr->fn_call.arg_ptr_arr.size < 1) printf("Empty\n");
+            else {
+                for (int i = 0; i < expr->fn_call.arg_ptr_arr.size; i++) {
+                    print_expression((Expression*)(expr->fn_call.arg_ptr_arr.void_ptrs[i]), tree_level+1);
+                }
+            }
+            break;
+        }
+        
         case EXPR_VAR_LITERAL: {
             PRINT_NODE("type: variable value\n", tree_level+1);
             PRINT_NODE("variable: ", tree_level+1);
@@ -312,11 +326,8 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
                 print_expression(((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->expr, tree_level+1);
                 break;
             }
-            default: {
-                printf("default\n");
+            default:
                 break;
-                
-            }
                 
         }
     }

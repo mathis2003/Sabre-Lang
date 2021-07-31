@@ -73,6 +73,7 @@ struct EntryPoint* parse_entry_point() {
                 break;
             }
             case TOK_NUMBER:
+            case TOK_OPEN_PAREN:
             case TOK_IDENTIFIER: {
                 struct Statement* stmt_ptr = parse_statement(NULL);
                 add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
@@ -152,6 +153,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
                 break;
             }
             case TOK_NUMBER:
+            case TOK_OPEN_PAREN:
             case TOK_IDENTIFIER: {
                 struct Statement* stmt_ptr = parse_statement(surrounding_scope);
                 add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
@@ -537,7 +539,39 @@ struct Expression* parse_factor() {
         eat_token(TOK_CLOSE_PAREN);
     }
     
+    // check if there's an open paren following up, in that case: function call
+    if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+        ret_expr = parse_fn_call_expr(ret_expr);
+        
+    }
+    
     return ret_expr;
+}
+
+struct Expression* parse_fn_call_expr(Expression* fn_ptr) {
+    Expression fn_call_expr;
+    
+    fn_call_expr.expr_type            = EXPR_FN_CALL;
+    fn_call_expr.fn_call.fn_ptr_expr  = fn_ptr;
+    init_void_ptr_arr(&(fn_call_expr.fn_call.arg_ptr_arr));
+    
+    // parse arguments list
+    next_token(); //skips over open paren
+    if (cur_token_ptr->tok_type != TOK_CLOSE_PAREN) {
+        
+        while (1) {
+            Expression* arg = parse_expression();
+            add_void_ptr_to_arr(&(fn_call_expr.fn_call.arg_ptr_arr), (void*)arg);
+            if (cur_token_ptr->tok_type == TOK_COMMA) next_token();
+            else if (cur_token_ptr->tok_type == TOK_CLOSE_PAREN) break;
+            else ; // NOOOO!!!! ERRRORRRRR!!!
+        }
+    } else ;
+    next_token(); // skips over close paren
+    
+    Expression* ret_expr_ptr = add_expression_to_bucket(&fn_call_expr, ast_root_node->allocators.expression_bucket);
+    
+    return ret_expr_ptr;
 }
 
 /*-------------------------------------------------------------------------------*/
