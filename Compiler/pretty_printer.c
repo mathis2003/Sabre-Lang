@@ -299,6 +299,24 @@ void print_expression(Expression* expr, int tree_level) {
             }
             break;
         }
+            
+        case EXPR_ASSIGN: {
+            PRINT_NODE("type: assignment\n", tree_level+1);
+            PRINT_NODE("left variable: ", tree_level+1);
+            if (expr->assignment.left_hand_side_is_variable) {
+                print_str_struct(&(expr->assignment.variable_name));
+            } else {
+                // left hand side is scope
+                printf("\n");
+                PRINT_NODE("scope:", tree_level+2);
+                printf("\n");
+                PRINT_NODE("index: ", tree_level + 3);
+                printf("%d", expr->assignment.scope_object.index);
+            }
+            
+            print_expression(expr->assignment.assigned_value, tree_level+1);
+            break;
+        }
         
         case EXPR_VAR_LITERAL: {
             PRINT_NODE("type: variable value\n", tree_level+1);
@@ -319,6 +337,20 @@ void print_expression(Expression* expr, int tree_level) {
     }
 }
 
+void print_cfi(struct ControlFlowIndicator* cfi_ptr, int tree_level) {
+    PRINT_NODE("Control Flow Indicator:\n", tree_level);
+    PRINT_NODE("index: ", tree_level + 1);
+    printf("%d\n", cfi_ptr->scope_obj.index);
+    PRINT_NODE("label: ", tree_level + 1);
+    if (cfi_ptr->scope_obj.start_lbl) {
+        printf("start\n");
+    } else if (cfi_ptr->scope_obj.end_lbl) {
+        printf("end\n");
+    } else if (cfi_ptr->scope_obj.exit_lbl) {
+        printf("exit\n");
+    }
+}
+
 void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
     for (int i = 0; i < stmt_ptr_arr->size; i++) {
         printf("\n");
@@ -328,6 +360,11 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
                 print_expression(((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->expr, tree_level+1);
                 break;
             }
+            case STMT_CFI: {
+                print_cfi(&(((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->cfi) , tree_level+1);
+                break;
+            }
+            
             default:
                 break;
                 

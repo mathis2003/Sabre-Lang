@@ -9,12 +9,13 @@ typedef enum ExpressionType {
     EXPR_ADD, EXPR_SUB, EXPR_MULT, EXPR_DIV, EXPR_IF_THEN_ELSE, EXPR_FN_CALL,
     EXPR_LOGIC_AND, EXPR_LOGIC_OR,
     EXPR_COND_EQUALS, EXPR_COND_GREATER_EQUALS, EXPR_COND_LOWER_EQUALS, EXPR_COND_GREATER, EXPR_COND_LOWER,
-    EXPR_VAR_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL
+    EXPR_VAR_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL,
+    EXPR_ASSIGN
     
 } ExpressionType;
 
 typedef enum StatementType {
-    STMT_EXPR
+    STMT_EXPR, STMT_CFI
 } StatementType;
 
 typedef enum DataType {
@@ -39,6 +40,20 @@ typedef struct ImportList {
     struct StringStruct* namespaces;
     
 } ImportList;
+
+typedef struct ScopeObject {
+    char index;
+    
+    // accessed element
+    unsigned int start_lbl : 1;
+    unsigned int end_lbl : 1;
+    unsigned int exit_lbl : 1;
+    unsigned int return_val : 1;
+} ScopeObject;
+
+typedef struct ControlFlowIndicator {
+    struct ScopeObject scope_obj;
+} ControlFlowIndicator;
 
 typedef struct FnLiteral {
     struct FnLiteral* parent_scope;
@@ -70,6 +85,15 @@ typedef struct BinOp {
     struct Expression* right;
 } BinOp;
 
+typedef struct Assignment {
+    unsigned int left_hand_side_is_variable : 1;
+    union {
+        struct StringStruct variable_name;
+        struct ScopeObject  scope_object;
+    };
+    struct Expression* assigned_value;
+} Assignment;
+
 typedef struct Expression {
     enum ExpressionType expr_type;
     
@@ -80,14 +104,11 @@ typedef struct Expression {
         struct StringStruct string_literal;
         struct StringStruct variable_literal;
         struct FnLiteral*   fn_ptr_literal;
-        // binop
         struct BinOp        bin_op;
-        // ternop
         struct TernOp       tern_op;
-        // fn literal
-        struct FnLiteral*   fn_literal;
-        // fn call
         struct FnCall       fn_call;
+        struct Assignment   assignment;
+        
         
         
     };
@@ -96,10 +117,10 @@ typedef struct Expression {
 } Expression;
 
 typedef struct Statement {
-    // for now, it seems like every statement will be an expression statement
     enum StatementType stmt_type;
     union {
         struct Expression* expr;
+        struct ControlFlowIndicator cfi;
     };
 } Statement;
 
@@ -205,6 +226,7 @@ struct EntryPoint* parse_entry_point();
 struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
 struct Declaration* parse_parameter_declaration();
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
+void parse_cfi(struct Statement* stmt);
 struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
 void parse_imports(struct ImportList* import_list_ptr);
 

@@ -412,5 +412,4 @@ void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add) {
 
 void free_void_ptr_arr(struct VoidPtrArr* void_ptr_arr) {
     free(void_ptr_arr->void_ptrs);
-    //free(void_ptr_arr);
 }
