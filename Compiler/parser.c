@@ -28,56 +28,44 @@ struct Program* ast_root_node;
 struct Program* parse_tokens(struct TokenArr* tok_arr) {
     tok_arr_ptr = tok_arr;
     cur_token_ptr = cur_token();
-    struct Program* result_node = malloc(sizeof(struct Program));
-    if (result_node == NULL) {
+    
+    ast_root_node = malloc(sizeof(Program));
+    if (ast_root_node == NULL) {
         /* NO!!!! PANICK!!!! ERROR!!!!! */
         printf("FUCKKKKK!!!!!!");
         return NULL;
     }
-    ast_root_node = result_node;
     
-    init_ast_allocators(result_node);
+    parse_program_node(ast_root_node);
     
-    parse_program_node(result_node);
-    
-    return result_node;
+    return ast_root_node;
 }
 
 /*-------------------------------------------------------------------------------*/
 
-void parse_program_node(struct Program* program_node) {
+void parse_program_node(Program* program_ptr) {
+    
+    // LATER ON WE'LL NEED TO LOOK WHETHER THIS IS THE MAIN MODULE OR NOT
+    
+    
     /* INIT PROGRAM NODE */ {
-        program_node->entry_point = NULL;
-        init_void_ptr_arr(&(program_node->decl_ptr_arr));
+        init_ast_allocators(program_ptr);
+        program_ptr->entry_point = parse_entry_point();
     }
     
-    
-    
-    while (cur_token_ptr != NULL) {
-        if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET) {
-            struct Declaration* decl_ptr = parse_declaration(NULL);
-            add_void_ptr_to_arr(&(program_node->decl_ptr_arr), (void*)decl_ptr);
-        }
-        else if (str_equals_literal(&(cur_token_ptr->name_str), "ENTRY_POINT")) {
-            EntryPoint* entrypoint = parse_entry_point();
-            program_node->entry_point = entrypoint;
-        }
-        else {
-            // parse error
-        }
-        
-        
-    }
 }
 
 struct EntryPoint* parse_entry_point() {
-    eat_token(TOK_IDENTIFIER);
     struct EntryPoint* entrypoint = malloc(sizeof(EntryPoint));
+    if (entrypoint == NULL) {
+        /* NO!!!! PANICK!!!! ERROR!!!!! */
+        printf("FUCKKKKK!!!!!!");
+        return NULL;
+    }
     init_void_ptr_arr(&(entrypoint->decl_ptr_arr));
     init_void_ptr_arr(&(entrypoint->stmt_ptr_arr));
-    eat_token(TOK_OPEN_CURLY);
     
-    while (cur_token_ptr->tok_type != TOK_CLOSE_CURLY) {
+    while (cur_token_ptr != NULL) {
         switch (cur_token_ptr->tok_type) {
             case TOK_OPEN_ANGLE_BRACKET: {
                 struct Declaration* decl_ptr = parse_declaration(NULL);
@@ -103,9 +91,8 @@ struct EntryPoint* parse_entry_point() {
             }
                 
         }
+        
     }
-    
-    eat_token(TOK_CLOSE_CURLY);
     
     return entrypoint;
 }
@@ -352,15 +339,14 @@ struct Expression* parse_expression() {
     Expression* expr_ptr;
     
     
-    if (cur_token_ptr->tok_type == TOK_NUMBER || cur_token_ptr->tok_type == TOK_BOOL) {
+    if (cur_token_ptr->tok_type == TOK_NUMBER || cur_token_ptr->tok_type == TOK_BOOL || cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
         // parse boolean operand
         expr_ptr = parse_logic_expr();
         
     }
     else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
-            // parse if expression
-            ;
+            expr_ptr = parse_if_else_expr();
         } else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit")) {
             // parse anonymous function call expression
             ;
@@ -368,6 +354,23 @@ struct Expression* parse_expression() {
     }
     //Expression* expr_ptr = add_expression_to_bucket(&expr, ast_root_node->allocators.expression_bucket);
     return expr_ptr;
+}
+
+struct Expression* parse_if_else_expr() {
+    Expression if_else_expr;
+    
+    if_else_expr.expr_type = EXPR_IF_THEN_ELSE;
+
+    eat_token(TOK_IDENTIFIER);
+    if_else_expr.tern_op.left   = parse_expression();
+    eat_token(TOK_IDENTIFIER);
+    if_else_expr.tern_op.middle = parse_expression();
+    eat_token(TOK_IDENTIFIER);
+    if_else_expr.tern_op.right  = parse_expression();
+    
+    Expression* ret_expr_ptr = add_expression_to_bucket(&if_else_expr, ast_root_node->allocators.expression_bucket);
+    
+    return ret_expr_ptr;
 }
 
 struct Expression* parse_logic_expr() {
@@ -573,9 +576,6 @@ void free_AST(struct Program* ast_root) {
     free_void_ptr_arr(&ast_root->entry_point->decl_ptr_arr);
     free_void_ptr_arr(&ast_root->entry_point->stmt_ptr_arr);
     free(ast_root->entry_point);
-    
-    // free global decl pointer array
-    free_void_ptr_arr(&ast_root->decl_ptr_arr);
     
     // free the space of FnLiterals, Declarations, Statements and Expressions
     free_fn_literal_bucket(ast_root->allocators.fn_literal_bucket);

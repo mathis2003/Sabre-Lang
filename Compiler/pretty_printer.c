@@ -274,6 +274,17 @@ void print_expression(Expression* expr, int tree_level) {
             
         /* also put function call, if expression, ... here */
         
+        case EXPR_IF_THEN_ELSE: {
+            PRINT_NODE("type: if-then-else\n", tree_level+1);
+            PRINT_NODE("left: ", tree_level+1);
+            print_expression(expr->tern_op.left, tree_level+1);
+            PRINT_NODE("middle: ", tree_level+1);
+            print_expression(expr->tern_op.middle, tree_level+1);
+            PRINT_NODE("right: ", tree_level+1);
+            print_expression(expr->tern_op.right, tree_level+1);
+            break;
+        }
+        
         case EXPR_VAR_LITERAL: {
             PRINT_NODE("type: variable value\n", tree_level+1);
             PRINT_NODE("variable: ", tree_level+1);
@@ -301,8 +312,12 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
                 print_expression(((struct Statement*)(stmt_ptr_arr->void_ptrs[i]))->expr, tree_level+1);
                 break;
             }
-            default:
+            default: {
+                printf("default\n");
                 break;
+                
+            }
+                
         }
     }
 }
@@ -439,7 +454,7 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
 
 void print_entry_point(struct EntryPoint* entry_point) {
     print_declarations(&(entry_point->decl_ptr_arr), 2);
-    print_statements(&(entry_point->decl_ptr_arr), 2);
+    print_statements(&(entry_point->stmt_ptr_arr), 2);
 }
 
 void print_parse_tree(Program* program_node) {
@@ -457,6 +472,4 @@ void print_parse_tree(Program* program_node) {
         PRINT_NODE("-ENTRY_POINT:\n", 1);
         print_entry_point(program_node->entry_point);
     }
-    /// print global declarations
-    print_declarations(&(program_node->decl_ptr_arr), 1);
 }

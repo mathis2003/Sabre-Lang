@@ -38,6 +38,8 @@ typedef struct FnLiteral {
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
     
+    // also imports should be added here
+    
     enum DataType return_type;
     
 } FunctionLiteral;
@@ -102,6 +104,8 @@ typedef struct Declaration {
 typedef struct EntryPoint {
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
+    
+    // also imports should be added here
 } EntryPoint;
 
 typedef struct Allocators {
@@ -113,7 +117,7 @@ typedef struct Allocators {
 
 typedef struct Program {
     struct EntryPoint* entry_point;
-    struct VoidPtrArr  decl_ptr_arr;
+    //struct VoidPtrArr  decl_ptr_arr;
     
     struct Allocators  allocators;
 } Program;
@@ -179,7 +183,7 @@ typedef struct ExpressionBucket {
 
 struct Program* parse_tokens(struct TokenArr* tok_arr);
 
-void parse_program_node(struct Program* program_node);
+void parse_program_node(Program* program_ptr);
 struct EntryPoint* parse_entry_point();
 struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
 struct Declaration* parse_parameter_declaration();
@@ -187,6 +191,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
 struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
 
 struct Expression* parse_expression();
+struct Expression* parse_if_else_expr();
 struct Expression* parse_logic_expr();
 struct Expression* parse_bool_term();
 struct Expression* parse_cond_term();
