@@ -62,8 +62,12 @@ struct EntryPoint* parse_entry_point() {
         printf("FUCKKKKK!!!!!!");
         return NULL;
     }
-    init_void_ptr_arr(&(entrypoint->decl_ptr_arr));
-    init_void_ptr_arr(&(entrypoint->stmt_ptr_arr));
+    
+    /* INITIALIZE ENTRY POINT */{
+        init_void_ptr_arr(&(entrypoint->decl_ptr_arr));
+        init_void_ptr_arr(&(entrypoint->stmt_ptr_arr));
+        entrypoint->imports.amount_of_imported_files = 0;
+    }
     
     while (cur_token_ptr != NULL) {
         switch (cur_token_ptr->tok_type) {
@@ -73,12 +77,21 @@ struct EntryPoint* parse_entry_point() {
                 break;
             }
             case TOK_NUMBER:
-            case TOK_OPEN_PAREN:
-            case TOK_IDENTIFIER: {
+            case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(NULL);
                 add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
                 eat_token(TOK_SEMI_COLON);
                 break;
+            }
+            case TOK_IDENTIFIER: {
+                if (str_equals_literal(&(cur_token_ptr->name_str), "import")) {
+                    parse_imports(&(entrypoint->imports));
+                } else {
+                    struct Statement* stmt_ptr = parse_statement(NULL);
+                    add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
+                    eat_token(TOK_SEMI_COLON);
+                    break;
+                }
             }
             case TOK_EQUALS: {
                 // control flow indicator found
@@ -106,6 +119,8 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
         init_void_ptr_arr(&(ret_fn_literal.param_decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.stmt_ptr_arr));
+        
+        ret_fn_literal.imports.amount_of_imported_files = 0;
     }
     
     // parse function parameters
@@ -153,12 +168,21 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
                 break;
             }
             case TOK_NUMBER:
-            case TOK_OPEN_PAREN:
-            case TOK_IDENTIFIER: {
+            case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(surrounding_scope);
                 add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
                 eat_token(TOK_SEMI_COLON);
                 break;
+            }
+            case TOK_IDENTIFIER: {
+                if (str_equals_literal(&(cur_token_ptr->name_str), "import")) {
+                    parse_imports(&(ret_fn_literal.imports));
+                } else {
+                    struct Statement* stmt_ptr = parse_statement(surrounding_scope);
+                    add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
+                    eat_token(TOK_SEMI_COLON);
+                    break;
+                }
             }
             case TOK_EQUALS: {
                 // control flow indicator found
@@ -322,6 +346,10 @@ struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
             // parse if expression
             stmt.stmt_type = STMT_EXPR;
             stmt.expr = parse_expression();
+        } else {
+            // also some expression for now
+            stmt.stmt_type = STMT_EXPR;
+            stmt.expr = parse_expression();
         }
     } else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
         stmt.stmt_type = STMT_EXPR;
@@ -333,6 +361,30 @@ struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
     return ret_stmt_ptr;
 }
 
+void parse_imports(struct ImportList* import_list_ptr) {
+    next_token(); // skips over "import"
+    eat_token(TOK_OPEN_PAREN); // skips over "{"
+    import_list_ptr->amount_of_imported_files = count_tokens_until_end_token_found(TOK_ASTERISK, TOK_CLOSE_CURLY);
+    
+    import_list_ptr->imported_files = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
+    import_list_ptr->namespaces     = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
+    
+    // for now, don't parse the "as"- namespaces yet, just assume C headers
+    for (int i = 0; i < import_list_ptr->amount_of_imported_files; i++) {
+        eat_token(TOK_ASTERISK);
+        if (cur_token_ptr->tok_type == TOK_STRING) {
+            import_list_ptr->imported_files[i] = cur_token_ptr->name_str;
+            //import_list_ptr->namespaces[i]     = {};
+        } else {
+            // NOOOOO!!!! ERROR!!!!!!
+            return;
+        }
+        
+        next_token(); // skips over imported file's name
+    }
+    
+    eat_token(TOK_CLOSE_CURLY);
+}
 
 /*-------------------------------------------------------------------------------*/
 /* EXPRESSION PARSING                                                            */
@@ -352,6 +404,8 @@ struct Expression* parse_expression() {
         } else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit")) {
             // parse anonymous function call expression
             ;
+        } else {
+            expr_ptr = parse_factor();
         }
     }
     //Expression* expr_ptr = add_expression_to_bucket(&expr, ast_root_node->allocators.expression_bucket);
@@ -512,18 +566,13 @@ struct Expression* parse_factor() {
     Expression* ret_expr;
     // basically, the options here are: an expression between parentheses, a function call, or a literal
     if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
-        if (peek_token()->tok_type == TOK_OPEN_PAREN) {
-            // parse function call
-            ;
-        }
-        else {
-            // parse variable
-            struct Expression var_literal_expr;
-            var_literal_expr.expr_type = EXPR_VAR_LITERAL;
-            var_literal_expr.variable_literal = cur_token_ptr->name_str;
-            ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
-            next_token();
-        }
+        // parse variable
+        struct Expression var_literal_expr;
+        var_literal_expr.expr_type = EXPR_VAR_LITERAL;
+        var_literal_expr.variable_literal = cur_token_ptr->name_str;
+        ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
+        next_token();
+        
     }
     else if (cur_token_ptr->tok_type == TOK_NUMBER) {
         struct Expression number_literal_expr;
@@ -599,6 +648,13 @@ struct Token* cur_token() {
     return (cur_token_ptr = &(tok_arr_ptr->tokens[cur_token_index]));
 }
 
+int count_tokens_until_end_token_found(int token_to_count, int end_token) {
+    int count = 0;
+    for (int i = 0; ((tok_arr_ptr->tokens[cur_token_index + i]).tok_type != end_token) && (i+cur_token_index < tok_arr_ptr->size); i++) {
+        if (tok_arr_ptr->tokens[cur_token_index + i].tok_type == token_to_count) ++count;
+    }
+    return count;
+}
 
 /*-------------------------------------------------------------------------------*/
 

@@ -177,6 +177,7 @@ for (int i = 0; i < tree_level; i++) printf("    "); \
 printf("%s", node_name);
 
 void print_fn_literal(struct FnLiteral* fn_literal, int tree_level);
+void print_import_list(struct ImportList* import_list, int tree_level);
 
 void print_expression(Expression* expr, int tree_level) {
     printf("\n");
@@ -303,6 +304,7 @@ void print_expression(Expression* expr, int tree_level) {
             PRINT_NODE("type: variable value\n", tree_level+1);
             PRINT_NODE("variable: ", tree_level+1);
             print_str_struct(&(expr->variable_literal));
+            printf("\n");
             break;
         }
         case EXPR_NUM_LITERAL: {
@@ -458,12 +460,23 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
             break;
     }
 
-    
+    print_import_list(&(fn_literal->imports), tree_level + 1);
     print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
     print_statements(&(fn_literal->stmt_ptr_arr), tree_level+1);
 }
 
+void print_import_list(struct ImportList* import_list, int tree_level) {
+    printf("\n");
+    PRINT_NODE("-IMPORTS:\n", tree_level);
+    for (int i = 0; i < import_list->amount_of_imported_files; i++) {
+        PRINT_NODE("import file name: ", tree_level+1);
+        print_str_struct(&(import_list->imported_files[i]));
+        printf("\n");
+    }
+}
+
 void print_entry_point(struct EntryPoint* entry_point) {
+    print_import_list(&(entry_point->imports), 2);
     print_declarations(&(entry_point->decl_ptr_arr), 2);
     print_statements(&(entry_point->stmt_ptr_arr), 2);
 }

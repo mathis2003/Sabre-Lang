@@ -31,6 +31,15 @@ typedef struct VoidPtrArr {
     
 } VoidPtrArr;
 
+typedef struct ImportList {
+    // Structure Of Arrays : imported files and their names are parallel in arrays
+    int amount_of_imported_files;
+    
+    struct StringStruct* imported_files;
+    struct StringStruct* namespaces;
+    
+} ImportList;
+
 typedef struct FnLiteral {
     struct FnLiteral* parent_scope;
     
@@ -38,7 +47,7 @@ typedef struct FnLiteral {
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
     
-    // also imports should be added here
+    struct ImportList imports;
     
     enum DataType return_type;
     
@@ -114,7 +123,7 @@ typedef struct EntryPoint {
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
     
-    // also imports should be added here
+    struct ImportList imports;
 } EntryPoint;
 
 typedef struct Allocators {
@@ -126,7 +135,6 @@ typedef struct Allocators {
 
 typedef struct Program {
     struct EntryPoint* entry_point;
-    //struct VoidPtrArr  decl_ptr_arr;
     
     struct Allocators  allocators;
 } Program;
@@ -198,6 +206,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
 struct Declaration* parse_parameter_declaration();
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
 struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
+void parse_imports(struct ImportList* import_list_ptr);
 
 struct Expression* parse_expression();
 struct Expression* parse_if_else_expr();
@@ -212,6 +221,7 @@ struct Token* next_token();
 struct Token* peek_token();
 void eat_token(enum TokenType expected_type);
 struct Token* cur_token();
+int count_tokens_until_end_token_found(int token_to_count, int end_token);
 
 void free_AST(struct Program* ast_root);
 

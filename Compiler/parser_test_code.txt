@@ -1,6 +1,3 @@
-
-< global_var1 : u32 >
-
 |"" 
 this
 |""
@@ -10,6 +7,16 @@ a nested comment
 ""|
 
 --------------------
+----- IMPORTS ------
+--------------------
+import {
+	* "file1.h"
+	* "file2.h"
+}
+
+
+
+--------------------
 --- DECLARATIONS ---
 --------------------
 	
@@ -17,6 +24,11 @@ a nested comment
 --<MyVar2 : String = "some string">
 <my_fn  : fn = (a : u8, b : Unit) -> u8
 {
+	import {
+		* "file1.h"
+		* "file2.h"
+	}
+
 	1 + 2 * 3 + 4;
 }>
 
@@ -36,6 +48,7 @@ else 4;
 
 (if (1) then 1 else 2)(1, 2); -- function call
 (2)(); -- also a function call
+my_func(1+2*3, 2);
 
 
 < global_var2 : u8 = 32>
