@@ -372,6 +372,76 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
     }
 }
 
+void print_data_type(struct DataType* data_type_ptr, int tree_level) {
+    PRINT_NODE("Type:\n", tree_level);
+    switch (data_type_ptr->type_enum_val) {
+        case UINT_8: {
+            PRINT_NODE("u8\n", tree_level+1);
+            break;
+        }
+        case UINT_16: {
+            PRINT_NODE("u16\n", tree_level+1);
+            break;
+        }
+        case UINT_32: {
+            PRINT_NODE("u32\n", tree_level+1);
+            break;
+        }
+        case STRING: {
+            PRINT_NODE("String\n", tree_level+1);
+            break;
+        }
+        case FN_PTR: {
+            PRINT_NODE("function\n", tree_level+1);
+            PRINT_NODE("parameters:\n", tree_level+2);
+            struct FunctionType* function_type = data_type_ptr->fn_type;
+            for (int i = 0; i < function_type->amount_of_fn_parameters; i++) {
+                print_data_type(&(function_type->parameter_types[i]), tree_level+3);
+            }
+            PRINT_NODE("return type:\n", tree_level+2);
+            print_data_type(&(function_type->return_type), tree_level+3);
+            break;
+        }
+        case UNIT: {
+            PRINT_NODE("Unit\n", tree_level+1);
+            break;
+        }
+            
+        default:
+            break;
+    }
+}
+
+void print_init_val(struct Declaration* decl_ptr, int tree_level) {
+    PRINT_NODE("init val:\n", tree_level);
+    
+    switch (decl_ptr->type.type_enum_val) {
+        case UINT_8: {
+            PRINT_NODE("", tree_level+1);
+            printf("%ld", decl_ptr->init_int_val);
+            break;
+        }
+        case UINT_16: {
+            PRINT_NODE("", tree_level+1);
+            printf("%ld", decl_ptr->init_int_val);
+            break;
+        }
+        case UINT_32: {
+            PRINT_NODE("", tree_level+1);
+            printf("%ld", decl_ptr->init_int_val);
+            break;
+        }
+        case FN_PTR: {
+            PRINT_NODE("", tree_level+1);
+            print_fn_literal(decl_ptr->init_fn_ptr, tree_level);
+            break;
+        }
+            
+        default:
+            break;
+    }
+}
+
 void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
     for (int i = 0; i < decl_ptr_arr->size; i++) {
         printf("\n");
@@ -379,57 +449,12 @@ void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
         PRINT_NODE("Name: ", tree_level + 1);
         print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->identifier);
         printf("\n");
-        switch (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type) {
-            case UINT_8: {
-                PRINT_NODE("Type: u8\n", tree_level + 1);
-                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
-                    PRINT_NODE("Init value: ", tree_level + 1);
-                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
-                    printf("\n");
-                }
-                break;
-            }
-            case UINT_16: {
-                PRINT_NODE("Type: u16\n", tree_level + 1);
-                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
-                    PRINT_NODE("Init value: ", tree_level + 1);
-                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
-                    printf("\n");
-                }
-                break;
-            }
-            case UINT_32: {
-                PRINT_NODE("Type: u32\n", tree_level + 1);
-                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
-                    PRINT_NODE("Init value: ", tree_level + 1);
-                    printf("%ld", ((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_int_val);
-                    printf("\n");
-                }
-                break;
-            }
-            case STRING: {
-                PRINT_NODE("Type: String\n", tree_level + 1);
-                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
-                    PRINT_NODE("Init value: \"", tree_level + 1);
-                    print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_string);
-                    printf("\"\n");
-                }
-                break;
-            }
-            case FN_PTR: {
-                PRINT_NODE("Type: Fn\n", tree_level + 1);
-                if (((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized) {
-                    PRINT_NODE("Init value: \n", tree_level + 1);
-                    print_fn_literal(((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->init_fn_ptr, tree_level + 1);
-                }
-                break;
-            }
-                
-            default:
-                break;
-        }
+        print_data_type(&(((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type), tree_level+1);
+        print_init_val(((struct Declaration*)(decl_ptr_arr->void_ptrs[i])), tree_level+1);
     }
 }
+
+
 
 void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
     
@@ -438,36 +463,14 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
         PRINT_NODE("Name: ", tree_level + 2);
         print_str_struct(&((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->identifier);
         printf("\n");
-        PRINT_NODE("Type: ", tree_level + 2);
-        switch (((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->type) {
-            case UINT_8: {
-                printf("u8\n");
-                break;
-            }
-            case UINT_16: {
-                printf("u16\n");
-                break;
-            }
-            case UINT_32: {
-                printf("u32\n");
-                break;
-            }
-            case STRING: {
-                printf("String\n");
-                break;
-            }
-            case FN_PTR: {
-                printf("fn\n");
-                break;
-            }
-                
-            default:
-                break;
-        }
+        print_data_type(&(((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->type), tree_level+1);
+        
     }
     
     PRINT_NODE("Return Type: ", tree_level + 1);
-    switch (fn_literal->return_type) {
+    print_data_type(&(fn_literal->return_type), tree_level+1);
+    /*
+    switch (fn_literal->return_type.type_enum_val) {
         case UINT_8: {
             printf("u8\n");
             break;
@@ -496,7 +499,7 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
         default:
             break;
     }
-
+     */
     print_import_list(&(fn_literal->imports), tree_level + 1);
     print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
     print_statements(&(fn_literal->stmt_ptr_arr), tree_level+1);

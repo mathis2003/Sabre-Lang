@@ -185,6 +185,13 @@ void free_declaration_bucket(MainDeclarationBucket* declaration_bucket) {
     // free declaration buckets, starting with the last one
     while (last_declaration_bucket->prev_bucket != NULL) {
         last_declaration_bucket = last_declaration_bucket->prev_bucket;
+        // don't forget to free the parameter types if declaration was a function
+        for (int i = 0; i < last_declaration_bucket->size; i++) {
+            /*if (last_declaration_bucket->next_bucket->declarations[i].type == FN_PTR &&
+                last_declaration_bucket->next_bucket->declarations[i].fn_type.amount_of_parameters > 0) {
+                free(last_declaration_bucket->next_bucket->declarations[i].fn_type.parameter_types);
+            }*/
+        }
         free(last_declaration_bucket->next_bucket->declarations);
         free(last_declaration_bucket->next_bucket);
     }

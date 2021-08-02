@@ -18,13 +18,18 @@ typedef enum StatementType {
     STMT_EXPR, STMT_CFI
 } StatementType;
 
-typedef enum DataType {
+typedef enum DataTypeEnum {
     UNIT, UINT_8, UINT_16, UINT_32, STRING, FN_PTR
-} DataType;
+} DataTypeEnum;
 
 /*----------------------------------------------------------------------------------------*/
 
 /* Structs */
+typedef struct DataType {
+    // stuff
+    enum DataTypeEnum type_enum_val;
+    struct FunctionType* fn_type;
+} DataType;
 
 typedef struct VoidPtrArr {
     int size, capacity;
@@ -64,7 +69,7 @@ typedef struct FnLiteral {
     
     struct ImportList imports;
     
-    enum DataType return_type;
+    struct DataType return_type;
     
 } FunctionLiteral;
 
@@ -124,9 +129,23 @@ typedef struct Statement {
     };
 } Statement;
 
+
+typedef struct FunctionType {
+    // DANGER: if amount_of_parameters is not zero-initialized, there is a double free in the if statement in the deepest
+    //         loop void free_declaration_bucket(MainDeclarationBucket* declaration_bucket) in parser_commons.c
+    int amount_of_fn_parameters;
+    struct DataType* parameter_types;
+    //
+    struct DataType return_type;
+} FunctionType;
+
+
+
+
 typedef struct Declaration {
     struct StringStruct identifier;
-    enum DataType type;
+    
+    struct DataType type;
     
     char is_initialized;
     union {
@@ -230,6 +249,9 @@ void parse_cfi(struct Statement* stmt);
 struct Statement* parse_statement (struct FnLiteral* surrounding_scope);
 void parse_imports(struct ImportList* import_list_ptr);
 
+struct DataType parse_data_type();
+struct FunctionType* parse_function_type();
+
 struct Expression* parse_expression();
 struct Expression* parse_if_else_expr();
 struct Expression* parse_logic_expr();
@@ -244,6 +266,7 @@ struct Token* peek_token();
 void eat_token(enum TokenType expected_type);
 struct Token* cur_token();
 int count_tokens_until_end_token_found(int token_to_count, int end_token);
+int count_fn_parameters();
 
 void free_AST(struct Program* ast_root);
 
