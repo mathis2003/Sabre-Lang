@@ -1,4 +1,7 @@
 
+
+
+
 -----------------------------------------------------------------------
 
 
@@ -28,10 +31,16 @@ import {
 --- DECLARATIONS ---
 --------------------
 	
---<my_var : u32 = 53>
-<MyVar2 : String = "some string">
-<my_fn  : (u8, Unit) -> (String) -> Unit = (a : u8, b : Unit) -> (String) -> Unit
-{
+
+
+[my_var1 : u32 <- 15 + 6 / 2]
+[my_var2 : u32 = my_var1]
+[my_val1 : $u8 = 5]
+[my_val2 : $u32 = $my_var1]
+
+
+[my_fn  : (u8, Unit) -> Unit <- 
+(a : u8, b : Unit) -> Unit {
 
 => scope[0].start
 
@@ -41,7 +50,9 @@ import {
 	}
 
 	1 + 2 * 3 + 4;
-}>
+
+}]
+
 --------------------
 ---- STATEMENTS ----
 --------------------
@@ -53,15 +64,16 @@ else if (3) then 3
 else 4;
 
 
-scope[50].ret = 1 + 3;
+scope[50].ret <- 1 + 3;
 
-a = if (1 < 2 && 3 > 1) then 1 else 0;
+a <- if (1 < 2 && 3 > 1) then 1 else 0;
 
 (if (1) then 1 else 2)(1, 2); -- function call
 
 (2)(); -- also a function call
 
 my_func(1+2*3, 2);
+
 -----------------------------------------------------------------------
 
 

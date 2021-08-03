@@ -180,94 +180,93 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level);
 void print_import_list(struct ImportList* import_list, int tree_level);
 
 void print_expression(Expression* expr, int tree_level) {
-    printf("\n");
     PRINT_NODE("-EXPRESSION:\n", tree_level);
     switch (expr->expr_type) {
         case EXPR_ADD: {
             PRINT_NODE("type: add\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_SUB: {
             PRINT_NODE("type: sub\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_MULT: {
             PRINT_NODE("type: mult\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_DIV: {
             PRINT_NODE("type: div\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_LOGIC_AND: {
             PRINT_NODE("type: logic and\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_LOGIC_OR: {
             PRINT_NODE("type: logic or\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_COND_EQUALS: {
             PRINT_NODE("type: equals condition\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_COND_GREATER_EQUALS: {
             PRINT_NODE("type: greater or equals condition\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_COND_LOWER_EQUALS: {
             PRINT_NODE("type: lower or equals condition\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_COND_GREATER: {
             PRINT_NODE("type: greater condition\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
         case EXPR_COND_LOWER: {
             PRINT_NODE("type: lower condition\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->bin_op.left, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->bin_op.right, tree_level+1);
             break;
         }
@@ -277,24 +276,27 @@ void print_expression(Expression* expr, int tree_level) {
         
         case EXPR_IF_THEN_ELSE: {
             PRINT_NODE("type: if-then-else\n", tree_level+1);
-            PRINT_NODE("left: ", tree_level+1);
+            PRINT_NODE("left:\n", tree_level+1);
             print_expression(expr->tern_op.left, tree_level+1);
-            PRINT_NODE("middle: ", tree_level+1);
+            PRINT_NODE("middle:\n", tree_level+1);
             print_expression(expr->tern_op.middle, tree_level+1);
-            PRINT_NODE("right: ", tree_level+1);
+            PRINT_NODE("right:\n", tree_level+1);
             print_expression(expr->tern_op.right, tree_level+1);
             break;
         }
         
         case EXPR_FN_CALL: {
             PRINT_NODE("type: function call\n", tree_level+1);
-            PRINT_NODE("function pointer: ", tree_level+1);
+            PRINT_NODE("function pointer:\n", tree_level+1);
             print_expression(expr->fn_call.fn_ptr_expr, tree_level+1);
-            PRINT_NODE("argument list: ", tree_level+1);
-            if (expr->fn_call.arg_ptr_arr.size < 1) printf("Empty\n");
+            PRINT_NODE("argument list:\n", tree_level+1);
+            if (expr->fn_call.arg_ptr_arr.size < 1) {
+                PRINT_NODE("", tree_level+2);
+                printf("Empty\n");
+            }
             else {
                 for (int i = 0; i < expr->fn_call.arg_ptr_arr.size; i++) {
-                    print_expression((Expression*)(expr->fn_call.arg_ptr_arr.void_ptrs[i]), tree_level+1);
+                    print_expression((Expression*)(expr->fn_call.arg_ptr_arr.void_ptrs[i]), tree_level+2);
                 }
             }
             break;
@@ -302,18 +304,20 @@ void print_expression(Expression* expr, int tree_level) {
             
         case EXPR_ASSIGN: {
             PRINT_NODE("type: assignment\n", tree_level+1);
-            PRINT_NODE("left variable: ", tree_level+1);
+            PRINT_NODE("left variable:\n", tree_level+1);
             if (expr->assignment.left_hand_side_is_variable) {
+                PRINT_NODE("", tree_level+2);
                 print_str_struct(&(expr->assignment.variable_name));
+                printf("\n");
             } else {
                 // left hand side is scope
                 printf("\n");
-                PRINT_NODE("scope:", tree_level+2);
-                printf("\n");
-                PRINT_NODE("index: ", tree_level + 3);
-                printf("%d", expr->assignment.scope_object.index);
+                PRINT_NODE("scope:\n", tree_level+2);
+                PRINT_NODE("index:\n", tree_level + 3);
+                PRINT_NODE("", tree_level + 4);
+                printf("%d\n", expr->assignment.scope_object.index);
             }
-            
+            PRINT_NODE("assigned:\n", tree_level+1);
             print_expression(expr->assignment.assigned_value, tree_level+1);
             break;
         }
@@ -331,10 +335,22 @@ void print_expression(Expression* expr, int tree_level) {
             printf("%ld\n", expr->int_literal);
             break;
         }
-            
-        default:
+        case EXPR_VALUE_OF: {
+            PRINT_NODE("type: value of ($)\n", tree_level+1);
+            PRINT_NODE("variable: ", tree_level+1);
+            print_str_struct(&(expr->val_of_op.variable_name));
+            printf("\n");
             break;
+        }
+            
+        default: {
+            PRINT_NODE("", tree_level + 1);
+            printf("couldn't match expression type: %d\n", expr->expr_type);
+            break;
+        }
+            
     }
+    printf("\n");
 }
 
 void print_cfi(struct ControlFlowIndicator* cfi_ptr, int tree_level) {
@@ -374,6 +390,7 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
 
 void print_data_type(struct DataType* data_type_ptr, int tree_level) {
     PRINT_NODE("Type:\n", tree_level);
+    if (data_type_ptr->is_value) { PRINT_NODE("$\n", tree_level); }
     switch (data_type_ptr->type_enum_val) {
         case UINT_8: {
             PRINT_NODE("u8\n", tree_level+1);
@@ -415,30 +432,19 @@ void print_data_type(struct DataType* data_type_ptr, int tree_level) {
 void print_init_val(struct Declaration* decl_ptr, int tree_level) {
     PRINT_NODE("init val:\n", tree_level);
     
-    switch (decl_ptr->type.type_enum_val) {
-        case UINT_8: {
+    if (decl_ptr->type.is_value) {
+        if (decl_ptr->type.type_enum_val == FN_PTR) {
+            print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
+        } else print_expression(decl_ptr->init_expr, tree_level);
+    } else {
+        if (decl_ptr->variable_assigned) {
             PRINT_NODE("", tree_level+1);
-            printf("%ld", decl_ptr->init_int_val);
-            break;
+            print_str_struct(&(decl_ptr->init_variable));
+        } else {
+            if (decl_ptr->type.type_enum_val == FN_PTR) {
+                print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
+            } else print_expression(decl_ptr->init_expr, tree_level);
         }
-        case UINT_16: {
-            PRINT_NODE("", tree_level+1);
-            printf("%ld", decl_ptr->init_int_val);
-            break;
-        }
-        case UINT_32: {
-            PRINT_NODE("", tree_level+1);
-            printf("%ld", decl_ptr->init_int_val);
-            break;
-        }
-        case FN_PTR: {
-            PRINT_NODE("", tree_level+1);
-            print_fn_literal(decl_ptr->init_fn_ptr, tree_level);
-            break;
-        }
-            
-        default:
-            break;
     }
 }
 
@@ -450,7 +456,9 @@ void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
         print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->identifier);
         printf("\n");
         print_data_type(&(((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type), tree_level+1);
-        print_init_val(((struct Declaration*)(decl_ptr_arr->void_ptrs[i])), tree_level+1);
+        if ((((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized)) {
+            print_init_val(((struct Declaration*)(decl_ptr_arr->void_ptrs[i])), tree_level+1);
+        }
     }
 }
 
@@ -467,39 +475,9 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
         
     }
     
-    PRINT_NODE("Return Type: ", tree_level + 1);
+    PRINT_NODE("Return Type:\n", tree_level + 1);
     print_data_type(&(fn_literal->return_type), tree_level+1);
-    /*
-    switch (fn_literal->return_type.type_enum_val) {
-        case UINT_8: {
-            printf("u8\n");
-            break;
-        }
-        case UINT_16: {
-            printf("u16\n");
-            break;
-        }
-        case UINT_32: {
-            printf("u32\n");
-            break;
-        }
-        case STRING: {
-            printf("String\n");
-            break;
-        }
-        case FN_PTR: {
-            printf("fn\n");
-            break;
-        }
-        case UNIT: {
-            printf("Unit\n");
-            break;
-        }
-            
-        default:
-            break;
-    }
-     */
+
     print_import_list(&(fn_literal->imports), tree_level + 1);
     print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
     print_statements(&(fn_literal->stmt_ptr_arr), tree_level+1);

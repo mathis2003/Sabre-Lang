@@ -10,7 +10,8 @@ typedef enum ExpressionType {
     EXPR_LOGIC_AND, EXPR_LOGIC_OR,
     EXPR_COND_EQUALS, EXPR_COND_GREATER_EQUALS, EXPR_COND_LOWER_EQUALS, EXPR_COND_GREATER, EXPR_COND_LOWER,
     EXPR_VAR_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL,
-    EXPR_ASSIGN
+    EXPR_ASSIGN,
+    EXPR_VALUE_OF
     
 } ExpressionType;
 
@@ -27,6 +28,7 @@ typedef enum DataTypeEnum {
 /* Structs */
 typedef struct DataType {
     // stuff
+    unsigned int is_value : 1;
     enum DataTypeEnum type_enum_val;
     struct FunctionType* fn_type;
 } DataType;
@@ -96,8 +98,17 @@ typedef struct Assignment {
         struct StringStruct variable_name;
         struct ScopeObject  scope_object;
     };
-    struct Expression* assigned_value;
+    unsigned int assigned_val_is_fn : 1;
+    union {
+        struct Expression* assigned_value;
+        struct FnLiteral* assigned_fn_literal;
+    };
+    
 } Assignment;
+
+typedef struct ValueOfOp {
+    struct StringStruct variable_name;
+} ValueOfOp;
 
 typedef struct Expression {
     enum ExpressionType expr_type;
@@ -113,7 +124,7 @@ typedef struct Expression {
         struct TernOp       tern_op;
         struct FnCall       fn_call;
         struct Assignment   assignment;
-        
+        struct ValueOfOp    val_of_op;
         
         
     };
@@ -147,13 +158,18 @@ typedef struct Declaration {
     
     struct DataType type;
     
-    char is_initialized;
+    unsigned int is_initialized : 1;
+    unsigned int variable_assigned : 1;
     union {
+        //...
         long int            init_int_val;
         char                init_char_val;
         struct StringStruct init_string;
-        struct FnLiteral*   init_fn_ptr;
+        
         //...
+        struct FnLiteral*   init_fn_ptr;
+        struct Expression*  init_expr;
+        struct StringStruct init_variable;
     };
     
 } Declaration;
@@ -253,20 +269,23 @@ struct DataType parse_data_type();
 struct FunctionType* parse_function_type();
 
 struct Expression* parse_expression();
+struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store_in_operator);
 struct Expression* parse_if_else_expr();
 struct Expression* parse_logic_expr();
 struct Expression* parse_bool_term();
 struct Expression* parse_cond_term();
 struct Expression* parse_arith_term();
+struct Expression* parse_value_of_term();
 struct Expression* parse_factor();
 struct Expression* parse_fn_call_expr(Expression* fn_ptr);
 
 struct Token* next_token();
-struct Token* peek_token();
+struct Token* peek_token(int offset);
 void eat_token(enum TokenType expected_type);
 struct Token* cur_token();
 int count_tokens_until_end_token_found(int token_to_count, int end_token);
 int count_fn_parameters();
+enum TokenType get_tok_type(Token* tok);
 
 void free_AST(struct Program* ast_root);
 
