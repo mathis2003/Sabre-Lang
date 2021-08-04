@@ -1,0 +1,19 @@
+import {
+	* "stdio.h"
+}
+
+[a : $u32 = 5]
+
+printf("Hello, World!\n");
+printf("factorial: %d\n", factorial(a));
+printf(("fibonacci: %d\n", fibonacci(a));
+
+[factorial = (n : $u32) -> u32 {
+	scope[0].ret <- if (n > 1) then n * factorial(n-1) else 1;
+}]
+
+[fibonacci = (n: $u32) -> u32 {
+	scope[0].ret <- if (n > 1) then fibonacci(n-1) + fibonacci(n-2) 
+			else if (n == 1) then 1
+			else 0;
+}]
