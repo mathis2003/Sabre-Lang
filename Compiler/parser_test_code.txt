@@ -39,8 +39,8 @@ import {
 [my_val2 : $u32 = $my_var1]
 
 
-[my_fn  : (u8, Unit) -> Unit <- 
-(a : u8, b : Unit) -> Unit {
+[my_fn  : $(u8, (String, u32) -> u16) -> Unit = 
+(a : u8, b : (String, u32) -> u16) -> Unit {
 
 => scope[0].start
 
@@ -74,6 +74,16 @@ a <- if (1 < 2 && 3 > 1) then 1 else 0;
 
 my_func(1+2*3, 2);
 
+
+[my_func = {
+	1+2;
+}]
+
+[factorial = (a : $u32) -> u32 {
+	scope[0].ret <- if ((a) > 1) then (a) * factorial((a)-1) else 1;
+}]
+
+a <- (a)-1;
 -----------------------------------------------------------------------
 
 

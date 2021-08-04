@@ -20,7 +20,7 @@ typedef enum StatementType {
 } StatementType;
 
 typedef enum DataTypeEnum {
-    UNIT, UINT_8, UINT_16, UINT_32, STRING, FN_PTR
+    UNIT, UINT_8, UINT_16, UINT_32, STRING, FN_PTR, DATA_BOOL
 } DataTypeEnum;
 
 /*----------------------------------------------------------------------------------------*/
@@ -267,6 +267,7 @@ void parse_imports(struct ImportList* import_list_ptr);
 
 struct DataType parse_data_type();
 struct FunctionType* parse_function_type();
+struct FunctionType* parse_fn_literal_to_function_type(struct FnLiteral* fn_literal);
 
 struct Expression* parse_expression();
 struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store_in_operator);

@@ -471,7 +471,7 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
         PRINT_NODE("Name: ", tree_level + 2);
         print_str_struct(&((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->identifier);
         printf("\n");
-        print_data_type(&(((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->type), tree_level+1);
+        print_data_type(&(((struct Declaration*)(fn_literal->param_decl_ptr_arr.void_ptrs[i]))->type), tree_level+2);
         
     }
     

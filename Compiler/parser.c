@@ -119,20 +119,28 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     }
     
     // parse function parameters
-    eat_token(TOK_OPEN_PAREN);
-    if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
-        do {
-            if (cur_token_ptr->tok_type == TOK_COMMA) next_token();
-            struct Declaration* param_decl_ptr = parse_parameter_declaration();
-            add_void_ptr_to_arr(&(ret_fn_literal.param_decl_ptr_arr), (void*)param_decl_ptr);
-        } while (cur_token_ptr->tok_type == TOK_COMMA);
+    if (get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY) {
+        struct DataType datatype;
+        datatype.is_value = 1;
+        datatype.type_enum_val = UNIT;
+        ret_fn_literal.return_type = datatype;
+    } else {
+        eat_token(TOK_OPEN_PAREN);
+        if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+            do {
+                if (cur_token_ptr->tok_type == TOK_COMMA) next_token();
+                struct Declaration* param_decl_ptr = parse_parameter_declaration();
+                add_void_ptr_to_arr(&(ret_fn_literal.param_decl_ptr_arr), (void*)param_decl_ptr);
+            } while (cur_token_ptr->tok_type == TOK_COMMA);
+        }
+        
+        eat_token(TOK_CLOSE_PAREN);
+        eat_token(TOK_MINUS);
+        eat_token(TOK_CLOSE_ANGLE_BRACKET);
+        
+        ret_fn_literal.return_type = parse_data_type();
     }
     
-    eat_token(TOK_CLOSE_PAREN);
-    eat_token(TOK_MINUS);
-    eat_token(TOK_CLOSE_ANGLE_BRACKET);
-    
-    ret_fn_literal.return_type = parse_data_type();
     
     eat_token(TOK_OPEN_CURLY);
     
@@ -248,61 +256,147 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
     eat_token(TOK_IDENTIFIER);
     if (cur_token_ptr->tok_type == TOK_COLON) {
         decl.type = parse_data_type();
-    } else {
-        // inference type
-    }
-    
-    /*check for initialization values*/
-    if (cur_token_ptr->tok_type == TOK_EQUALS) {
-        next_token(); // skip over equals sign
-        
-        decl.is_initialized = 1;
-        
-        if (decl.type.is_value) {
+        /*check for initialization values*/
+        if (cur_token_ptr->tok_type == TOK_EQUALS) {
+            next_token(); // skip over equals sign
+            
+            decl.is_initialized = 1;
+            
+            if (decl.type.is_value) {
+                decl.variable_assigned = 0;
+                if (decl.type.type_enum_val == FN_PTR) {
+                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                } else {
+                    decl.init_expr = parse_expression();
+                }
+                
+            } else {
+                // it is a variable
+                decl.variable_assigned = 1;
+                if (cur_token_ptr->tok_type != TOK_IDENTIFIER) {
+                    // NOOOO!!! PANICK!!!! ERROR!!!!
+                    printf("expected an identifier as a variable name to be assigned to this variable\n");
+                    return NULL;
+                }
+                decl.init_variable = cur_token_ptr->name_str;
+                next_token(); // skip over name of assigned variable
+            }
+        } else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET && peek_token(1)->tok_type == TOK_MINUS) {
+            next_token(); // skip over "<-" operator
+            next_token(); // skip over "<-" operator
+            
+            decl.is_initialized = 1;
             decl.variable_assigned = 0;
+            
+            if (decl.type.is_value) {
+                // NOOOO!!! PANICK!!!! ERROR!!!!
+                printf("can't put a value inside a value, the operator should be '=' instead of '<-'\n");
+                return NULL;
+            }
+            
             if (decl.type.type_enum_val == FN_PTR) {
                 decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
             } else {
                 decl.init_expr = parse_expression();
             }
             
+            
+            
         } else {
-            // it is a variable
-            decl.variable_assigned = 1;
-            if (cur_token_ptr->tok_type != TOK_IDENTIFIER) {
-                // NOOOO!!! PANICK!!!! ERROR!!!!
-                printf("expected an identifier as a variable name to be assigned to this variable\n");
-                return NULL;
-            }
-            decl.init_variable = cur_token_ptr->name_str;
-            next_token(); // skip over name of assigned variable
+            decl.variable_assigned = 0;
+            decl.is_initialized = 0;
+            
         }
-    } else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET && peek_token(1)->tok_type == TOK_MINUS) {
-        next_token(); // skip over "<-" operator
-        next_token(); // skip over "<-" operator
-        
-        decl.is_initialized = 1;
-        decl.variable_assigned = 0;
-        
-        if (decl.type.is_value) {
-            // NOOOO!!! PANICK!!!! ERROR!!!!
-            printf("can't put a value inside a value, the operator should be '=' instead of '<-'\n");
-            return NULL;
-        }
-        
-        if (decl.type.type_enum_val == FN_PTR) {
-            decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-        } else {
-            decl.init_expr = parse_expression();
-        }
-        
-        
-        
     } else {
-        decl.variable_assigned = 0;
-        decl.is_initialized = 0;
+        // inference type
         
+        /*check for initialization values*/
+        if (cur_token_ptr->tok_type == TOK_EQUALS) {
+            next_token(); // skip over equals sign
+            decl.is_initialized = 1;
+            
+            switch (get_tok_type(cur_token_ptr)) {
+                case TOK_OPEN_PAREN: {
+                    if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
+                        decl.type.type_enum_val = FN_PTR;
+                        decl.type.is_value = 1;
+                        decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                        
+                        decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    } else {
+                        //expression
+                    }
+                    break;
+                }
+                case TOK_OPEN_CURLY: {
+                    decl.type.type_enum_val = FN_PTR;
+                    decl.type.is_value = 1;
+                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                    decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    break;
+                }
+                case TOK_IDENTIFIER: {
+                    decl.type.is_value = 0;
+                    decl.init_variable = cur_token_ptr->name_str;
+                    break;
+                }
+                case TOK_INVALID: {
+                    // NOOOOO!!! PANICK!!!! ERROR!!!
+                    printf("the expression in this declaration is incorrect\n");
+                    return NULL;
+                    break;
+                }
+                    
+                default: {
+                    decl.init_expr = parse_expression();
+                    break;
+                    
+                }
+            }
+            
+            
+        } else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET && peek_token(1)->tok_type == TOK_MINUS) {
+            next_token(); // skip over "<-" operator
+            next_token(); // skip over "<-" operator
+            
+            decl.is_initialized    = 1;
+            decl.variable_assigned = 0;
+            decl.type.is_value     = 1;
+            
+            switch (get_tok_type(cur_token_ptr)) {
+                case TOK_OPEN_PAREN: {
+                    if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
+                        decl.type.type_enum_val = FN_PTR;
+                        decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                        decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    } else {
+                        // expression
+                    }
+                    break;
+                }
+                case TOK_OPEN_CURLY: {
+                    decl.type.type_enum_val = FN_PTR;
+                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                    decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    break;
+                }
+                case TOK_INVALID: {
+                    // NOOOOO!!! PANICK!!!! ERROR!!!
+                    printf("the expression in this declaration is incorrect\n");
+                    return NULL;
+                    break;
+                }
+                    
+                default: {
+                    decl.init_expr = parse_expression();
+                    break;
+                    
+                }
+            }
+        }
     }
+    
+    
     
     eat_token(TOK_CLOSE_SQUARE_BRACKET);
     
@@ -443,6 +537,31 @@ struct FunctionType* parse_function_type() {
     return function_type_ptr;
 }
 
+struct FunctionType* parse_fn_literal_to_function_type(struct FnLiteral* fn_literal) {
+    struct FunctionType* function_type_ptr = malloc(sizeof(struct FunctionType));
+    /*----------------------------------------------------------------------------------------------------------*/
+    {
+        // TODO: memory allocations for function_type
+        function_type_ptr->amount_of_fn_parameters = fn_literal->param_decl_ptr_arr.size;
+        function_type_ptr->parameter_types = malloc(function_type_ptr->amount_of_fn_parameters * sizeof(struct DataType));
+    }
+    /*----------------------------------------------------------------------------------------------------------*/
+    {
+        // TODO: actually parse parameter types
+        for (int i = 0; i < function_type_ptr->amount_of_fn_parameters; i++) {
+            function_type_ptr->parameter_types[i] = ((struct Declaration*)((fn_literal->param_decl_ptr_arr.void_ptrs)[i]))->type;
+        }
+    }
+    /*----------------------------------------------------------------------------------------------------------*/
+    {
+        // TODO: parse return type
+        function_type_ptr->return_type = fn_literal->return_type;
+    }
+    /*----------------------------------------------------------------------------------------------------------*/
+    
+    return function_type_ptr;
+}
+
 /*-------------------------------------------------------------------------------*/
 /* EXPRESSION PARSING                                                            */
 /*-------------------------------------------------------------------------------*/
@@ -527,8 +646,14 @@ struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store
         next_token(); // skip over index number
         eat_token(TOK_OPEN_SQUARE_BRACKET);
         eat_token(TOK_DOT);
-        eat_token(TOK_IDENTIFIER); // skip over "ret"
         
+        if (get_tok_type(cur_token_ptr) != TOK_IDENTIFIER || !str_equals_literal(&(cur_token_ptr->name_str), "ret")) {
+            // FUCKKKKK NOOOO ERROR!!!!!!!
+            printf("the object you're trying to access from scope is not valid: %d\n", cur_token_ptr->tok_type);
+            return NULL;
+        } else {
+            next_token(); // skip over "ret"
+        }
         
         assign_expr.assignment.scope_object.start_lbl    = 0;
         assign_expr.assignment.scope_object.end_lbl      = 0;
