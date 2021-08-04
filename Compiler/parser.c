@@ -589,7 +589,7 @@ struct Expression* parse_expression() {
             } else {
                 if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(0, 1);
                 else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(0, 0);
-                else expr_ptr = parse_factor();
+                else expr_ptr = parse_logic_expr();
             }
             
         }
