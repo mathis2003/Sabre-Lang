@@ -5,6 +5,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "code_gen.h"
 #include "pretty_printer.h"
 
 int main(int argc, char** argv) {
@@ -40,11 +41,13 @@ int main(int argc, char** argv) {
     print_parse_tree(program_node_ptr);
 
     
-    free_tokens(tok_arr);
+    //free_tokens(tok_arr);
     /*---------------------------------------------------------------------------------------*/
     /* CODE GEN                                                                              */
     /*---------------------------------------------------------------------------------------*/
+    generate_code(program_node_ptr, argv[2]);
     
+    print_generated_code(argv[2]);
     
     free_AST(program_node_ptr);
     /*---------------------------------------------------------------------------------------*/

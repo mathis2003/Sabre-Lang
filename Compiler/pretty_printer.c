@@ -6,6 +6,8 @@
 #include "parser.h"
 #include "string_commons.h"
 
+/* ----------------------------------TOKENS---------------------------------- */
+
 void print_tokens(TokenArr* tok_arr) {
     
     // Print header
@@ -172,6 +174,10 @@ void print_tokens(TokenArr* tok_arr) {
     }
 }
 
+
+/* ----------------------------------AST---------------------------------- */
+
+
 #define PRINT_NODE(node_name, tree_level) \
 for (int i = 0; i < tree_level; i++) printf("    "); \
 printf("%s", node_name);
@@ -333,6 +339,12 @@ void print_expression(Expression* expr, int tree_level) {
             PRINT_NODE("type: number literal\n", tree_level+1);
             PRINT_NODE("number: ", tree_level+1);
             printf("%ld\n", expr->int_literal);
+            break;
+        }
+        case EXPR_STR_LITERAL: {
+            PRINT_NODE("type: string literal\n", tree_level+1);
+            PRINT_NODE("string: ", tree_level+1);
+            printf("%s\n", str_to_c_str(&(expr->string_literal)));
             break;
         }
         case EXPR_VALUE_OF: {
@@ -514,4 +526,19 @@ void print_parse_tree(Program* program_node) {
         PRINT_NODE("-ENTRY_POINT:\n", 1);
         print_entry_point(program_node->entry_point);
     }
+}
+
+
+/* ----------------------------------OUTPUT CODE---------------------------------- */
+
+
+void print_generated_code(char* output_file_name) {
+    printf("\n\n---------------\n| OUTPUT CODE |\n---------------\n\n");
+    FILE* fp = fopen(output_file_name, "r");
+    int ch;
+    while ((ch = fgetc(fp)) != EOF) {
+        printf("%c", ch);
+    }
+    
+    fclose(fp);
 }

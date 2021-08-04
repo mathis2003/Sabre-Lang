@@ -569,7 +569,10 @@ struct Expression* parse_expression() {
     Expression* expr_ptr;
     
     
-    if (cur_token_ptr->tok_type == TOK_NUMBER || cur_token_ptr->tok_type == TOK_BOOL || cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+    if (cur_token_ptr->tok_type == TOK_NUMBER     ||
+        cur_token_ptr->tok_type == TOK_BOOL       ||
+        cur_token_ptr->tok_type == TOK_OPEN_PAREN ||
+        cur_token_ptr->tok_type == TOK_STRING) {
         // parse boolean operand
         expr_ptr = parse_logic_expr();
         
@@ -867,7 +870,13 @@ struct Expression* parse_factor() {
         number_literal_expr.int_literal = str_to_int(&cur_token_ptr->name_str);
         ret_expr = add_expression_to_bucket(&number_literal_expr, ast_root_node->allocators.expression_bucket);
         next_token();
-        
+    }
+    else if (cur_token_ptr->tok_type == TOK_STRING) {
+        struct Expression string_literal_expr;
+        string_literal_expr.expr_type = EXPR_STR_LITERAL;
+        string_literal_expr.string_literal = cur_token_ptr->name_str;
+        ret_expr = add_expression_to_bucket(&string_literal_expr, ast_root_node->allocators.expression_bucket);
+        next_token();
     }
     else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
         // parse parenthesized expression

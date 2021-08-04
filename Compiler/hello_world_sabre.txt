@@ -1,6 +1,7 @@
-
-printf("Hello, World!\n");
-
 import {
 	* "stdio.h"
 }
+
+printf("Hello, World!\n");
+
+

@@ -1,4 +1,4 @@
-
+#include <stdlib.h>
 #include "string_commons.h"
 
 int str_equals_literal(struct StringStruct* str, char* str_literal) {
@@ -27,4 +27,13 @@ int str_to_int(struct StringStruct* str) {
     }
     
     return ret_val;
+}
+
+char* str_to_c_str(struct StringStruct* str) {
+    char* ret_str = malloc((str->str_length + 1) * sizeof(char));
+    for (int i = 0; i < str->str_length; i++)
+        ret_str[i] = (str->str_start)[i];
+    ret_str[str->str_length] = '\0';
+    
+    return ret_str;
 }

@@ -1,18 +1,9 @@
-
-
-printf("%d", factorial(5));
-
-
 import {
 	* "stdio.h"
 }
 
-<factorial : fn = (a : u32) -> u32 {
-	(if (a > 1) then {
-		-- return a * factorial(a-1);
-	} else {
-		-- return 1;
-	}) ();
-	
+printf("%d\n", factorial(5));
 
-}>
+[factorial = (a : $u32) -> u32 {
+	scope[0].ret <- if (a > 1) then a * factorial(a-1) else 1;
+}]
