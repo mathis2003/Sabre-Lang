@@ -1,26 +1,52 @@
-/*
- * REFACTORING:
- *---------------------------------------------------
- *---------------------------------------------------
- * MALLOC ERRORS:
- *---------------------------------------------------
- * EXIT IMMEDIATELY + ERROR THAT MALLOC DID NOT WORK
- *---------------------------------------------------
- *---------------------------------------------------
- * SYNTAX ERRORS:
- *---------------------------------------------------
- * EXIT IMMEDIATELY + ERROR THAT SYNTAX IS WRONG
- *---------------------------------------------------
- *---------------------------------------------------
-
- *
- */
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "parser.h"
 #include "lexer.h"
 #include "string_commons.h"
+
+
+#include <stdarg.h>
+void die(const char* err_msg, ...) {
+    printf("\n");
+    
+    va_list args;
+    va_start(args, err_msg);
+    
+    for (int i = 0; err_msg[i] != '\0'; i++) {
+        if (err_msg[i] == '%') {
+            switch (err_msg[i+1]) {
+                case 'c': {
+                    int a = va_arg(args, int);
+                    printf("%c", a);
+                    i++;
+                    break;
+                }
+                case 'd': {
+                    int a = va_arg(args, int);
+                    printf("%d", a);
+                    i++;
+                    break;
+                }
+                case 's': {
+                    char* a = va_arg(args, char*);
+                    printf("%s", a);
+                    i++;
+                    break;
+                }
+                default: {
+                    putchar(err_msg[i]);
+                    break;
+                }
+                    
+            }
+        } else putchar(err_msg[i]);
+    }
+    
+    va_end(args);
+    
+    exit(1);
+}
 
 struct TokenArr* tok_arr_ptr;
 struct Token* cur_token_ptr;
@@ -31,9 +57,7 @@ struct Program* parse_tokens(struct TokenArr* tok_arr) {
     
     ast_root_node = malloc(sizeof(Program));
     if (ast_root_node == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("malloc error: couldn't allocate memory for ast root node");
     }
     
     parse_program_node(ast_root_node);
@@ -58,9 +82,7 @@ void parse_program_node(Program* program_ptr) {
 struct EntryPoint* parse_entry_point() {
     struct EntryPoint* entrypoint = malloc(sizeof(EntryPoint));
     if (entrypoint == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("malloc error: couldn't allocate memory for entry point node");
     }
     
     /* INITIALIZE ENTRY POINT */{
@@ -209,9 +231,7 @@ void parse_cfi(struct Statement* stmt) {
     if (cur_token_ptr->tok_type == TOK_NUMBER) {
         cfi.scope_obj.index = str_to_int(&(cur_token_ptr->name_str));
     } else {
-        // NOOOOO!!!!! ERROR!!!!!
-        printf("the index should be a number, instead got a token of type: %d", cur_token_ptr->tok_type);
-        return;
+        die("line %d - the index should be a number, instead got a token of type: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
     }
     next_token(); // skip over number
     
@@ -232,15 +252,10 @@ void parse_cfi(struct Statement* stmt) {
         } else if (str_equals_literal(&(cur_token_ptr->name_str), "exit")) {
             cfi.scope_obj.exit_lbl = 1;
         } else {
-            printf("can't lead control flow to: ");
-            print_str_struct(&cur_token_ptr->name_str);
-            printf("\n");
-            return;
+            die("line %d - can't lead control flow to: %s", cur_token_ptr->line, str_to_c_str(&(cur_token_ptr->name_str)));
         }
     } else {
-        // NOOOO!!!! ERROR!!!!
-        printf("expected an accessible member of the scope but got a token of type: %d\n", cur_token_ptr->tok_type);
-        return;
+        die("line %d - expected an accessible member of the scope but got a token of type: %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
     }
     
     next_token(); // skip over "start", "end" or "exit"
@@ -274,9 +289,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 // it is a variable
                 decl.variable_assigned = 1;
                 if (cur_token_ptr->tok_type != TOK_IDENTIFIER) {
-                    // NOOOO!!! PANICK!!!! ERROR!!!!
-                    printf("expected an identifier as a variable name to be assigned to this variable\n");
-                    return NULL;
+                    die("line %d - expected an identifier as a variable name to be assigned to this variable\n", cur_token_ptr->line);
                 }
                 decl.init_variable = cur_token_ptr->name_str;
                 next_token(); // skip over name of assigned variable
@@ -289,9 +302,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             decl.variable_assigned = 0;
             
             if (decl.type.is_value) {
-                // NOOOO!!! PANICK!!!! ERROR!!!!
-                printf("can't put a value inside a value, the operator should be '=' instead of '<-'\n");
-                return NULL;
+                die("line %d - can't put a value inside a value, the operator should be '=' instead of '<-'\n", cur_token_ptr->line);
             }
             
             if (decl.type.type_enum_val == FN_PTR) {
@@ -342,7 +353,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 }
                 case TOK_INVALID: {
                     // NOOOOO!!! PANICK!!!! ERROR!!!
-                    printf("the expression in this declaration is incorrect\n");
+                    die("line %d - the expression in this declaration is incorrect\n", cur_token_ptr->line);
                     return NULL;
                     break;
                 }
@@ -381,8 +392,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     break;
                 }
                 case TOK_INVALID: {
-                    // NOOOOO!!! PANICK!!!! ERROR!!!
-                    printf("the expression in this declaration is incorrect\n");
+                    die("line %d - the expression in this declaration is incorrect\n", cur_token_ptr->line);
                     return NULL;
                     break;
                 }
@@ -491,10 +501,7 @@ struct DataType parse_data_type() {
         else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit"))   data_type.type_enum_val = UNIT;
         else if (str_equals_literal(&(cur_token_ptr->name_str), "String")) data_type.type_enum_val = STRING;
         else {
-            // ERROR!!!! PANICK!!!!
-            printf("invalid datatype: ");
-            print_str_struct(&(cur_token_ptr->name_str));
-            printf("\n");
+            die("line %d - invalid datatype: %s\n", cur_token_ptr->line, str_to_c_str(&(cur_token_ptr->name_str)));
         }
         next_token(); // skip over type
     } else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
@@ -647,18 +654,14 @@ struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, c
         if (cur_token_ptr->tok_type == TOK_NUMBER) {
             assign_expr.assignment.scope_object.index = str_to_int(&(cur_token_ptr->name_str));
         } else {
-            // FUCKKKKK NOOOO ERROR!!!!!!!
-            printf("index in scope[] is not a number but : %d\n", cur_token_ptr->tok_type);
-            return NULL;
+            die("line %d - index in scope[] is not a number but : %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
         }
         next_token(); // skip over index number
-        eat_token(TOK_OPEN_SQUARE_BRACKET);
+        eat_token(TOK_CLOSE_SQUARE_BRACKET);
         eat_token(TOK_DOT);
         
         if (get_tok_type(cur_token_ptr) != TOK_IDENTIFIER || !str_equals_literal(&(cur_token_ptr->name_str), "ret")) {
-            // FUCKKKKK NOOOO ERROR!!!!!!!
-            printf("the object you're trying to access from scope is not valid: %d\n", cur_token_ptr->tok_type);
-            return NULL;
+            die("line - the object you're trying to access from scope is not valid: %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
         } else {
             next_token(); // skip over "ret"
         }
@@ -848,9 +851,7 @@ struct Expression* parse_value_of_term() {
     if (get_tok_type(cur_token_ptr) == TOK_IDENTIFIER) {
         value_of_expr.val_of_op.variable_name = cur_token_ptr->name_str;
     } else {
-        // NOOOOO!!! PANICK!!!! ERROR!!!
-        printf("expected an identifier after value-of operator $\n");
-        return NULL;
+        die("line %d - expected an identifier after value-of operator $\n", cur_token_ptr->line);
     }
     
     next_token(); // skip over identifier
@@ -933,7 +934,7 @@ struct Expression* parse_fn_call_expr(Expression* fn_ptr) {
 int cur_token_index = 0;
 
 struct Token* next_token() {
-    if (cur_token_index+1 >= tok_arr_ptr->size) return (cur_token_ptr = NULL); // exception!!!
+    if (cur_token_index+1 >= tok_arr_ptr->size) return (cur_token_ptr = NULL);
     cur_token_index++;
     return (cur_token_ptr = &(tok_arr_ptr->tokens[cur_token_index]));
 }
@@ -944,12 +945,14 @@ struct Token* peek_token(int offset) {
 }
 
 void eat_token(enum TokenType expected_type) {
-    if (tok_arr_ptr->tokens[cur_token_index].tok_type != expected_type)  { (cur_token_ptr = NULL); }// error instead of return!!!
+    if (tok_arr_ptr->tokens[cur_token_index].tok_type != expected_type)  {
+        die("line: %d - expected token type: %d but got a token of type: %d\n", cur_token_ptr->line, expected_type, get_tok_type(cur_token_ptr));
+    }
     next_token();
 }
 
 struct Token* cur_token() {
-    if (cur_token_index >= tok_arr_ptr->size) return (cur_token_ptr = NULL); // exception!!!
+    if (cur_token_index >= tok_arr_ptr->size) die("current token was NULL\n");
     return (cur_token_ptr = &(tok_arr_ptr->tokens[cur_token_index]));
 }
 

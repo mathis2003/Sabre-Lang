@@ -1,16 +1,25 @@
+---- IMPORTS ----
+
 import {
 	* "stdio.h"
 }
+
+---- STATEMENTS ----
+
+c <- (($c) + (8));
+printf("a = %d | b = %d | c = %d\n", a, $b, $c);
+printf("Hello, World!\n");
+printf("factorial: %d\n", factorial(a));
+printf("fibonacci: %d\n", fibonacci(a));
+printf("mult (%d, %d): %d\n", 4, 5, mult(4, 5, 0));
+printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
+
+---- DECLARATIONS ----
 
 [a : $u32 = 6]
 [b : u32 <- 5]
 [c : u32 = b]
 
-c <- 12 + 3;
-printf("a = %d | b = %d | c = %d\n", a, $b, $c);
-printf("Hello, World!\n");
-printf("factorial: %d\n", factorial(a));
-printf(("fibonacci: %d\n", fibonacci(a));
 
 [factorial = (n : $u32) -> $u32 {
 	scope[0].ret <- if (n > 1) then n * this(n-1) else 1;
@@ -20,4 +29,28 @@ printf(("fibonacci: %d\n", fibonacci(a));
 	scope[0].ret <- if (n > 1) then this(n-1) + this(n-2) 
 			else if (n == 1) then 1
 			else 0;
+}]
+
+[mult = (f1: $u32, f2: $u32, n: $u32) -> $u32 {
+	scope[0].ret <- if (n < f2) then f1 + this(f1, f2, n+1) else 0;
+}]
+
+[exponent = (base: $u32, e: $u32, n: $u32) -> $u32 {
+	scope[0].ret <- if (n < e) then base * this(base, e, n+1) else 1;
+}]
+
+-------------------------------------------------------------------------------------------
+
+
+----- DEMO OF NESTED FUNCTION -----
+printf("p: %d\n", p());
+
+[p = () -> u8 {
+	
+	scope[0].ret <- ch() + 1;
+	
+	[ch = () -> u32 {
+		scope[0].ret <- 5;
+	}]
+
 }]

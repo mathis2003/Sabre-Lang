@@ -103,7 +103,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                 } else {
                     fprintf(fp, " = &(");
                     write_data_type(&(decl->type), fp);
-                    fprintf(fp, "){0}\n");
+                    fprintf(fp, "){0}");
                     assignment.right_hand_side_is_variable = 0;
                     assignment.assigned_value = decl->init_expr;
                 }
@@ -338,6 +338,8 @@ void write_assignment(struct Assignment* assignment, FILE* fp) {
 }
 
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
+    write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
+    
     write_data_type(&(fn_ptr->return_type), fp);
     fprintf(fp, " %s ", fn_name);
     fprintf(fp, "(");
@@ -353,8 +355,7 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     fprintf(fp, " __ret;\n\t");
     
     write_import_arr(&(fn_ptr->imports), fp);
-    fprintf(fp, "\n\t");
-    write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
+    
     fprintf(fp, "\n");
     global_switch_pair.old_name = "this";
     global_switch_pair.new_name = fn_name;
