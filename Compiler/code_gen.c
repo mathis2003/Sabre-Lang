@@ -61,7 +61,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
     if (decl->type.type_enum_val == FN_PTR) {
         if (decl->is_initialized) {
             anon_fn_name = generate_anon_fn_name();
-            write_fn_literal(anon_fn_name, str_to_c_str(&(decl->identifier)), decl->init_fn_ptr, fp);
+            write_fn_literal(anon_fn_name, decl->init_fn_ptr, fp);
         }
         
         write_data_type(&(decl->type.fn_type->return_type), fp);
@@ -138,10 +138,9 @@ void write_data_type (DataType* data_type, FILE* fp) {
 
 void write_statement(struct Statement* stmt, FILE* fp) {
     if (stmt->stmt_type == STMT_EXPR) {
-        
+        fprintf(fp, "\t");
         write_expression(stmt->expr, fp);
-        
-        fprintf(fp, ";");
+        fprintf(fp, ";\n");
     } else if (stmt->stmt_type == STMT_CFI) {
         
     }
@@ -291,7 +290,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
     fprintf(fp, ")");
 }
 
-void write_fn_literal(char* fn_name, char* rec_name, struct FnLiteral* fn_ptr, FILE* fp) {
+void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     write_data_type(&(fn_ptr->return_type), fp);
     fprintf(fp, " %s ", fn_name);
     fprintf(fp, "(");
@@ -309,8 +308,8 @@ void write_fn_literal(char* fn_name, char* rec_name, struct FnLiteral* fn_ptr, F
     write_import_arr(&(fn_ptr->imports), fp);
     fprintf(fp, "\n\t");
     write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
-    fprintf(fp, "\n\t");
-    global_switch_pair.old_name = rec_name;
+    fprintf(fp, "\n");
+    global_switch_pair.old_name = "this";
     global_switch_pair.new_name = fn_name;
     write_statements_arr(fn_ptr->stmt_ptr_arr, fp);
     global_switch_pair.old_name = NULL;
