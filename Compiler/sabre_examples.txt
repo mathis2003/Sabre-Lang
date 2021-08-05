@@ -6,6 +6,7 @@ import {
 [b : u32 <- 5]
 [c : u32 = b]
 
+c <- 12 + 3;
 printf("a = %d | b = %d | c = %d\n", a, $b, $c);
 printf("Hello, World!\n");
 printf("factorial: %d\n", factorial(a));

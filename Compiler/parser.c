@@ -587,11 +587,11 @@ struct Expression* parse_expression() {
             
             if (str_equals_literal(&(cur_token_ptr->name_str), "scope")) {
                 if ((peek_token(6)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(7)) == TOK_MINUS)) {
-                    expr_ptr = parse_assignment(1, 1);
+                    expr_ptr = parse_assignment(LEFT_HAND_RET, 1);
                 } 
             } else {
-                if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(0, 1);
-                else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(0, 0);
+                if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
+                else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
                 else expr_ptr = parse_logic_expr();
             }
             
@@ -603,12 +603,13 @@ struct Expression* parse_expression() {
     return expr_ptr;
 }
 
-struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store_in_operator) {
+struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, char store_in_operator) {
     Expression assign_expr;
     assign_expr.expr_type = EXPR_ASSIGN;
+    assign_expr.assignment.assigned_val_is_fn = 0;
     
-    if (left_hand_side_is_scope_obj == 0) {
-        assign_expr.assignment.left_hand_side_is_variable = 1;
+    if (left_hand_side_type != LEFT_HAND_RET) {
+        assign_expr.assignment.left_hand_side_enum = left_hand_side_type;
         assign_expr.assignment.variable_name = cur_token_ptr->name_str;
         next_token(); // skip over identifier
         
@@ -618,8 +619,11 @@ struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store
             
             if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
                 (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+                assign_expr.assignment.right_hand_side_is_variable = 1;
+                assign_expr.assignment.assigned_val_is_fn = 1;
                 assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
             } else {
+                assign_expr.assignment.right_hand_side_is_variable = 0;
                 assign_expr.assignment.assigned_value = parse_expression();
             }
             
@@ -627,6 +631,7 @@ struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store
             next_token(); // skip over equals sign
             if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
                 (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+                assign_expr.assignment.assigned_val_is_fn = 1;
                 assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
             } else {
                 assign_expr.assignment.assigned_value = parse_expression();
@@ -635,7 +640,7 @@ struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store
         
     } else {
         // left hand side is scope object, so the operatpr has to be "<-"
-        assign_expr.assignment.left_hand_side_is_variable = 0;
+        assign_expr.assignment.left_hand_side_enum = LEFT_HAND_RET;
         next_token(); // skip over "scope"
         eat_token(TOK_OPEN_SQUARE_BRACKET);
         

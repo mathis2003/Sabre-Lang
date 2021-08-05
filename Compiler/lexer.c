@@ -415,8 +415,8 @@ void add_close_angle_bracket_token(struct TokenArr* tok_arr) {
 /*-------------------------------------------------------------------------------------------------------------------------------*/
 
 int is_identifier(char ch, char is_first) {
-    if (is_first) return (ch == '_') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z');
-    return (ch == '_') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9');
+    if (is_first) return (ch == '_') ||('a' <= ch && ch <= 'z') ||('A' <= ch && ch <= 'Z');
+    return (ch == '_') ||('a' <= ch && ch <= 'z') ||('A' <= ch && ch <= 'Z') ||('0' <= ch && ch <= '9');
 }
 
 int is_number(char ch) {

@@ -311,7 +311,7 @@ void print_expression(Expression* expr, int tree_level) {
         case EXPR_ASSIGN: {
             PRINT_NODE("type: assignment\n", tree_level+1);
             PRINT_NODE("left variable:\n", tree_level+1);
-            if (expr->assignment.left_hand_side_is_variable) {
+            if ((expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) ||(expr->assignment.left_hand_side_enum == LEFT_HAND_VALUE)) {
                 PRINT_NODE("", tree_level+2);
                 print_str_struct(&(expr->assignment.variable_name));
                 printf("\n");

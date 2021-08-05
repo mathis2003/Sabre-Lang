@@ -92,17 +92,21 @@ typedef struct BinOp {
     struct Expression* right;
 } BinOp;
 
+typedef enum LeftHandSideType {
+    LEFT_HAND_VARIABLE, LEFT_HAND_VALUE, LEFT_HAND_RET
+} LeftHandSideType;
+
 typedef struct Assignment {
-    unsigned int left_hand_side_is_variable : 1;
-    unsigned int right_hand_side_is_variable : 1;
+    enum LeftHandSideType left_hand_side_enum;
     union {
         struct StringStruct variable_name;
         struct ScopeObject  scope_object;
     };
     
+    unsigned int right_hand_side_is_variable : 1;
     unsigned int assigned_val_is_fn : 1;
     union {
-        struct StringStruct assigned_variable;
+        struct StringStruct assigned_variable; // this member is not needed in parser but in code_gen
         struct Expression*  assigned_value;
         struct FnLiteral*   assigned_fn_literal;
     };
@@ -273,7 +277,7 @@ struct FunctionType* parse_function_type();
 struct FunctionType* parse_fn_literal_to_function_type(struct FnLiteral* fn_literal);
 
 struct Expression* parse_expression();
-struct Expression* parse_assignment(char left_hand_side_is_scope_obj, char store_in_operator);
+struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, char store_in_operator);
 struct Expression* parse_if_else_expr();
 struct Expression* parse_logic_expr();
 struct Expression* parse_bool_term();

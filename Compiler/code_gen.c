@@ -96,7 +96,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                 // make another assignment and add to array to write at the start of main()
                 struct Assignment assignment;
                 assignment.variable_name = decl->identifier;
-                assignment.left_hand_side_is_variable = 1;
+                assignment.left_hand_side_enum = LEFT_HAND_VARIABLE;
                 if (decl->variable_assigned) {
                     assignment.right_hand_side_is_variable = 1;
                     assignment.assigned_variable = decl->init_variable;
@@ -283,14 +283,19 @@ void write_expression(struct Expression* expr, FILE* fp) {
             break;
         }
         case EXPR_ASSIGN: {
+            
             // should also include assigning function literals
-            if (expr->assignment.left_hand_side_is_variable) {
+            if (expr->assignment.left_hand_side_enum == LEFT_HAND_VALUE) {
                 char* name = str_to_c_str(&(expr->assignment.variable_name));
                 fprintf(fp, "%s", name);
+            } else if (expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) {
+                char* name = str_to_c_str(&(expr->assignment.variable_name));
+                if (expr->assignment.right_hand_side_is_variable) fprintf(fp, "%s", name);
+                else fprintf(fp, "*%s", name);
             } else {
                 fprintf(fp, "__ret");
-                
             }
+            
             fprintf(fp, " = ");
             if (expr->assignment.assigned_val_is_fn) {
                 // do some stuff with anonymous function pointer or something
@@ -316,7 +321,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
 
 void write_assignment(struct Assignment* assignment, FILE* fp) {
     
-    if (assignment->left_hand_side_is_variable) {
+    if (assignment->left_hand_side_enum == LEFT_HAND_VARIABLE) {
         if (assignment->right_hand_side_is_variable) {
             fprintf(fp, "\t%s = ", str_to_c_str(&(assignment->variable_name)));
             fprintf(fp, "%s", str_to_c_str(&(assignment->assigned_variable)));
