@@ -20,6 +20,10 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 [b : u32 <- 5]
 [c : u32 = b]
 
+struct MyStruct :[
+	[a: u8]
+	[b : $u16 = 58]
+]
 
 [factorial = (n : $u32) -> $u32 {
 	scope[0].ret <- if (n > 1) then n * this(n-1) else 1;
@@ -46,7 +50,7 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 printf("p: %d\n", p());
 
 [p = () -> u8 {
-	
+
 	scope[0].ret <- ch() + 1;
 	
 	[ch = () -> u32 {

@@ -68,6 +68,7 @@ typedef struct FnLiteral {
     struct VoidPtrArr param_decl_ptr_arr;
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
+    struct VoidPtrArr struct_type_ptr_arr;
     
     struct ImportList imports;
     
@@ -158,7 +159,11 @@ typedef struct FunctionType {
 } FunctionType;
 
 
-
+typedef struct StructType {
+    struct StringStruct struct_name;
+    int amount_of_decls;
+    struct Declaration** decl_ptr_arr;
+} StructType;
 
 typedef struct Declaration {
     struct StringStruct identifier;
@@ -185,15 +190,17 @@ typedef struct Declaration {
 typedef struct EntryPoint {
     struct VoidPtrArr decl_ptr_arr;
     struct VoidPtrArr stmt_ptr_arr;
+    struct VoidPtrArr struct_type_ptr_arr;
     
     struct ImportList imports;
 } EntryPoint;
 
 typedef struct Allocators {
-    struct MainFnLiteralBucket* fn_literal_bucket;
+    struct MainFnLiteralBucket*   fn_literal_bucket;
     struct MainDeclarationBucket* declaration_bucket;
-    struct MainStatementBucket* statement_bucket;
-    struct MainExpressionBucket* expression_bucket;
+    struct MainStatementBucket*   statement_bucket;
+    struct MainExpressionBucket*  expression_bucket;
+    struct MainStructTypeBucket*  struct_type_bucket;
 } Allocators;
 
 typedef struct Program {
@@ -257,6 +264,19 @@ typedef struct ExpressionBucket {
     struct ExpressionBucket* prev_bucket;
 } ExpressionBucket;
 
+// this should be visible to the programmer
+typedef struct MainStructTypeBucket {
+    struct StructTypeBucket* root_bucket;
+} MainStructTypeBucket;
+
+// this should be hidden from the programmer
+typedef struct StructTypeBucket {
+    int size, capacity;
+    struct StructType* struct_types;
+    struct StructTypeBucket* next_bucket;
+    struct StructTypeBucket* prev_bucket;
+} StructTypeBucket;
+
 /*----------------------------------------------------------------------------------------*/
 
 /* FUNCTIONS */
@@ -266,6 +286,7 @@ struct Program* parse_tokens(struct TokenArr* tok_arr);
 void parse_program_node(Program* program_ptr);
 struct EntryPoint* parse_entry_point();
 struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
+struct StructType* parse_struct_type();
 struct Declaration* parse_parameter_declaration();
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);
 void parse_cfi(struct Statement* stmt);
@@ -293,6 +314,7 @@ void eat_token(enum TokenType expected_type);
 struct Token* cur_token();
 int count_tokens_until_end_token_found(int token_to_count, int end_token);
 int count_fn_parameters();
+int count_struct_members();
 enum TokenType get_tok_type(Token* tok);
 
 void free_AST(struct Program* ast_root);
@@ -316,6 +338,10 @@ void free_statement_bucket(MainStatementBucket* statement_bucket);
 struct Expression* add_expression_to_bucket(struct Expression* expression_to_add, struct MainExpressionBucket* expression_bucket);
 void init_main_expression_bucket(struct Program* program);
 void free_expression_bucket(MainExpressionBucket* expression_bucket);
+
+struct StructType* add_struct_type_to_bucket(struct StructType* struct_type_to_add, struct MainStructTypeBucket* struct_type_bucket);
+void init_main_struct_type_bucket(struct Program* program);
+void free_struct_type_bucket(MainStructTypeBucket* struct_type_bucket);
 
 void init_void_ptr_arr(struct VoidPtrArr* void_ptr_arr);
 void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add);

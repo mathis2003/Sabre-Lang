@@ -88,6 +88,7 @@ struct EntryPoint* parse_entry_point() {
     /* INITIALIZE ENTRY POINT */{
         init_void_ptr_arr(&(entrypoint->decl_ptr_arr));
         init_void_ptr_arr(&(entrypoint->stmt_ptr_arr));
+        init_void_ptr_arr(&(entrypoint->struct_type_ptr_arr));
         entrypoint->imports.amount_of_imported_files = 0;
     }
     
@@ -109,6 +110,9 @@ struct EntryPoint* parse_entry_point() {
             case TOK_IDENTIFIER: {
                 if (str_equals_literal(&(cur_token_ptr->name_str), "import")) {
                     parse_imports(&(entrypoint->imports));
+                } else if (str_equals_literal(&(cur_token_ptr->name_str), "struct")) {
+                    struct StructType* struct_ptr = parse_struct_type();
+                    add_void_ptr_to_arr(&(entrypoint->struct_type_ptr_arr), (void*)struct_ptr);
                 } else {
                     struct Statement* stmt_ptr = parse_statement(NULL);
                     add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
@@ -136,6 +140,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
         init_void_ptr_arr(&(ret_fn_literal.param_decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.decl_ptr_arr));
         init_void_ptr_arr(&(ret_fn_literal.stmt_ptr_arr));
+        init_void_ptr_arr(&(ret_fn_literal.struct_type_ptr_arr));
         
         ret_fn_literal.imports.amount_of_imported_files = 0;
     }
@@ -184,6 +189,9 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             case TOK_IDENTIFIER: {
                 if (str_equals_literal(&(cur_token_ptr->name_str), "import")) {
                     parse_imports(&(ret_fn_literal.imports));
+                } else if (str_equals_literal(&(cur_token_ptr->name_str), "struct")) {
+                    struct StructType* struct_ptr = parse_struct_type();
+                    add_void_ptr_to_arr(&(ret_fn_literal.struct_type_ptr_arr), (void*)struct_ptr);
                 } else {
                     struct Statement* stmt_ptr = parse_statement(surrounding_scope);
                     add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
@@ -192,7 +200,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             }
                 
             default: {
-                // parse error
+                die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
                 break;
             }
                 
@@ -205,6 +213,36 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     struct FnLiteral* ret_fn_literal_ptr = add_fn_literal_to_bucket(&ret_fn_literal, ast_root_node->allocators.fn_literal_bucket);
     
     return ret_fn_literal_ptr;
+}
+
+struct StructType* parse_struct_type() {
+    struct StructType struct_type;
+    
+    next_token(); //skip over "struct"
+    
+    
+    if (get_tok_type(cur_token_ptr) == TOK_IDENTIFIER) {
+        struct_type.struct_name = cur_token_ptr->name_str;
+        next_token(); // skip over struct's name
+    } else {
+        die("line %d - expected an identifier after \"struct\" for the struct declaration\n", cur_token_ptr->line);
+    }
+    
+    eat_token(TOK_COLON);
+    
+    struct_type.amount_of_decls = count_struct_members();
+    struct_type.decl_ptr_arr = malloc(struct_type.amount_of_decls * sizeof(struct Declaration*));
+    if (struct_type.decl_ptr_arr == NULL) die("malloc failure: couldn't allocate heap memory for declaration pointers of a struct\n");
+    
+    
+    eat_token(TOK_OPEN_SQUARE_BRACKET);
+    for (int i = 0; i < struct_type.amount_of_decls; i++) {
+        struct_type.decl_ptr_arr[i] = parse_declaration(NULL);
+    }
+    eat_token(TOK_CLOSE_SQUARE_BRACKET);
+    
+    struct StructType* ret_struct_type_ptr = add_struct_type_to_bucket(&struct_type, ast_root_node->allocators.struct_type_bucket);
+    return ret_struct_type_ptr;
 }
 
 struct Declaration* parse_parameter_declaration() {
@@ -989,6 +1027,28 @@ int count_fn_parameters() {
     
     return amount_of_fn_params;
 }
+
+int count_struct_members() {
+    if (get_tok_type(cur_token_ptr) == TOK_COLON) next_token(); // probably not necessary since parse_struct_type() should've skipped over this token but better safe than sorry
+    
+    int i = 0;
+    
+    int open_brackets_encountered = 1;
+    ++i; // skip over initial open bracket
+    int amount_of_struct_members = 0; // there's at least one member
+        
+    while (open_brackets_encountered) {
+        if (tok_arr_ptr->tokens[cur_token_index + i].tok_type == TOK_OPEN_SQUARE_BRACKET) {
+            open_brackets_encountered++;
+            amount_of_struct_members++;
+        } else if (tok_arr_ptr->tokens[cur_token_index + i].tok_type == TOK_CLOSE_SQUARE_BRACKET) {
+            open_brackets_encountered--;
+        }
+        i++;
+    }
+    
+    return amount_of_struct_members;
+}
                  
 enum TokenType get_tok_type(Token* tok) {
     if (tok == NULL) return TOK_INVALID;
@@ -1011,6 +1071,7 @@ void free_AST(struct Program* ast_root) {
     free_declaration_bucket(ast_root->allocators.declaration_bucket);
     free_statement_bucket(ast_root->allocators.statement_bucket);
     free_expression_bucket(ast_root->allocators.expression_bucket);
+    free_struct_type_bucket(ast_root->allocators.struct_type_bucket);
     
     free(ast_root);
 }
@@ -1023,5 +1084,5 @@ void init_ast_allocators(Program* program_ptr) {
     init_main_declaration_bucket(program_ptr);
     init_main_statement_bucket(program_ptr);
     init_main_expression_bucket(program_ptr);
-    // also init expression allocator here
+    init_main_struct_type_bucket(program_ptr);
 }

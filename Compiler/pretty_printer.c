@@ -184,6 +184,8 @@ printf("%s", node_name);
 
 void print_fn_literal(struct FnLiteral* fn_literal, int tree_level);
 void print_import_list(struct ImportList* import_list, int tree_level);
+void print_declaration(struct Declaration* decl, int tree_level);
+void print_struct_types(struct VoidPtrArr* struct_type_ptr_arr, int tree_level);
 
 void print_expression(Expression* expr, int tree_level) {
     PRINT_NODE("-EXPRESSION:\n", tree_level);
@@ -462,15 +464,19 @@ void print_init_val(struct Declaration* decl_ptr, int tree_level) {
 
 void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {
     for (int i = 0; i < decl_ptr_arr->size; i++) {
-        printf("\n");
-        PRINT_NODE("-DECLARATION:\n", tree_level);
-        PRINT_NODE("Name: ", tree_level + 1);
-        print_str_struct(&((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->identifier);
-        printf("\n");
-        print_data_type(&(((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->type), tree_level+1);
-        if ((((struct Declaration*)(decl_ptr_arr->void_ptrs[i]))->is_initialized)) {
-            print_init_val(((struct Declaration*)(decl_ptr_arr->void_ptrs[i])), tree_level+1);
-        }
+        print_declaration(((struct Declaration*)(decl_ptr_arr->void_ptrs[i])), tree_level);
+    }
+}
+
+void print_declaration(struct Declaration* decl, int tree_level) {
+    printf("\n");
+    PRINT_NODE("-DECLARATION:\n", tree_level);
+    PRINT_NODE("Name: ", tree_level + 1);
+    print_str_struct(&(decl->identifier));
+    printf("\n");
+    print_data_type(&(decl->type), tree_level+1);
+    if (decl->is_initialized) {
+        print_init_val(decl, tree_level+1);
     }
 }
 
@@ -491,8 +497,26 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
     print_data_type(&(fn_literal->return_type), tree_level+1);
 
     print_import_list(&(fn_literal->imports), tree_level + 1);
+    print_struct_types(&(fn_literal->struct_type_ptr_arr), tree_level+1);
     print_declarations(&(fn_literal->decl_ptr_arr), tree_level+1);
     print_statements(&(fn_literal->stmt_ptr_arr), tree_level+1);
+}
+
+void print_struct_type(struct StructType* struct_type, int tree_level) {
+    PRINT_NODE("-STRUCT DEFINITION:\n", tree_level);
+    PRINT_NODE("Struct Name: ", tree_level+1);
+    print_str_struct(&(struct_type->struct_name));
+    printf("\n");
+    
+    for (int i = 0; i < struct_type->amount_of_decls; i++) {
+        print_declaration((struct_type->decl_ptr_arr)[i], tree_level+1);
+    }
+}
+
+void print_struct_types(struct VoidPtrArr* struct_type_ptr_arr, int tree_level) {
+    for (int i = 0; i < struct_type_ptr_arr->size; i++) {
+        print_struct_type(((struct StructType*)(struct_type_ptr_arr->void_ptrs[i])), tree_level);
+    }
 }
 
 void print_import_list(struct ImportList* import_list, int tree_level) {
@@ -507,6 +531,7 @@ void print_import_list(struct ImportList* import_list, int tree_level) {
 
 void print_entry_point(struct EntryPoint* entry_point) {
     print_import_list(&(entry_point->imports), 2);
+    print_struct_types(&(entry_point->struct_type_ptr_arr), 2);
     print_declarations(&(entry_point->decl_ptr_arr), 2);
     print_statements(&(entry_point->stmt_ptr_arr), 2);
 }

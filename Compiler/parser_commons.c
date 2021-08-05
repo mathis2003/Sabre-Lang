@@ -368,8 +368,8 @@ void init_main_expression_bucket(struct Program* program) {
     expression_bucket_ptr->root_bucket->capacity         = 100;
     expression_bucket_ptr->root_bucket->expressions      = malloc(expression_bucket_ptr->root_bucket->capacity * sizeof(struct Expression));
     if (expression_bucket_ptr->root_bucket->expressions == NULL) { return; /* NO!!!! PANICK!!!! ERROR!!!!! */}
-    expression_bucket_ptr->root_bucket->next_bucket     = NULL;
-    expression_bucket_ptr->root_bucket->prev_bucket     = NULL;
+    expression_bucket_ptr->root_bucket->next_bucket      = NULL;
+    expression_bucket_ptr->root_bucket->prev_bucket      = NULL;
     
     program->allocators.expression_bucket = expression_bucket_ptr;
 
@@ -394,6 +394,104 @@ void free_expression_bucket(MainExpressionBucket* expression_bucket) {
     free(expression_bucket);
              
 }
+
+
+// --------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------
+// STRUCT_TYPE NODES ALLOCATOR
+// --------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------
+
+// this function adds an StructTypeBucket to the `next_bucket` member of the passed StructTypeBucket
+// this function should typically not be exposed to the programmer
+struct StructTypeBucket* add_new_struct_type_bucket(struct StructTypeBucket* struct_type_bucket) {
+    struct StructTypeBucket* next_struct_type_bucket = malloc(sizeof(StructTypeBucket));
+    if (next_struct_type_bucket == NULL) {
+        /* NO!!!! PANICK!!!! ERROR!!!!! */
+        printf("FUCKKKKK!!!!!!");
+        return NULL;
+    }
+    
+    // initialize new struct type bucket
+    next_struct_type_bucket->size               = 0;
+    next_struct_type_bucket->capacity           = struct_type_bucket->capacity * 2;
+    next_struct_type_bucket->struct_types       = malloc(next_struct_type_bucket->capacity * sizeof(struct StructType));
+    // check if we ran out of heap memory
+    if (next_struct_type_bucket->struct_types == NULL) {
+        /* NO!!!! PANICK!!!! ERROR!!!!! */
+        printf("FUCKKKKK!!!!!!");
+        return NULL;
+    }
+    // haven't run out? great, go on
+    next_struct_type_bucket->next_bucket = NULL;
+    next_struct_type_bucket->prev_bucket = struct_type_bucket;
+    
+    // add new struct_type bucket to the end of the "linked list"
+    struct_type_bucket->next_bucket = next_struct_type_bucket;
+    
+    return next_struct_type_bucket;
+}
+
+
+// this should be visible to the programmer
+struct StructType* add_struct_type_to_bucket(struct StructType* struct_type_to_add, struct MainStructTypeBucket* struct_type_bucket) {
+    // find last bucket
+    StructTypeBucket* cur_struct_type_bucket = struct_type_bucket->root_bucket;
+    
+    while (cur_struct_type_bucket->next_bucket != NULL) cur_struct_type_bucket = cur_struct_type_bucket->next_bucket;
+    
+    if (cur_struct_type_bucket->size >= cur_struct_type_bucket->capacity)
+        cur_struct_type_bucket = add_new_struct_type_bucket(cur_struct_type_bucket);
+    
+    cur_struct_type_bucket->struct_types[cur_struct_type_bucket->size] = *struct_type_to_add;
+    cur_struct_type_bucket->size += 1;
+    
+    return &(cur_struct_type_bucket->struct_types[(cur_struct_type_bucket->size - 1)]);
+    
+}
+
+
+void init_main_struct_type_bucket(struct Program* program) {
+    
+    MainStructTypeBucket* struct_type_bucket_ptr = malloc(sizeof(struct MainStructTypeBucket));
+    struct_type_bucket_ptr->root_bucket = malloc(sizeof(struct StructTypeBucket));
+    if (struct_type_bucket_ptr->root_bucket == NULL) {
+        printf("FUCKKKKK!!!!!!");
+        return;
+    }
+    
+    struct_type_bucket_ptr->root_bucket->size              = 0;
+    struct_type_bucket_ptr->root_bucket->capacity          = 100;
+    struct_type_bucket_ptr->root_bucket->struct_types      = malloc(struct_type_bucket_ptr->root_bucket->capacity * sizeof(struct StructType));
+    if (struct_type_bucket_ptr->root_bucket->struct_types == NULL) { return; /* NO!!!! PANICK!!!! ERROR!!!!! */}
+    struct_type_bucket_ptr->root_bucket->next_bucket       = NULL;
+    struct_type_bucket_ptr->root_bucket->prev_bucket       = NULL;
+    
+    program->allocators.struct_type_bucket = struct_type_bucket_ptr;
+
+}
+
+void free_struct_type_bucket(MainStructTypeBucket* struct_type_bucket) {
+    
+    // find last struct_type bucket in the linked list
+    StructTypeBucket* last_struct_type_bucket = struct_type_bucket->root_bucket;
+    while (last_struct_type_bucket->next_bucket != NULL) last_struct_type_bucket = last_struct_type_bucket->next_bucket;
+    
+    // free struct_type buckets, starting with the last one
+    while (last_struct_type_bucket->prev_bucket != NULL) {
+        last_struct_type_bucket = last_struct_type_bucket->prev_bucket;
+        free(last_struct_type_bucket->next_bucket->struct_types);
+        free(last_struct_type_bucket->next_bucket);
+    }
+    
+    free(last_struct_type_bucket->struct_types);
+    free(last_struct_type_bucket);
+    
+    free(struct_type_bucket);
+             
+}
+
+
 
 
 // --------------------------------------------------------------------------------------------------------
