@@ -10,9 +10,22 @@ void write_declaration(struct Declaration* decl, FILE* fp);
 void write_data_type (DataType* data_type, FILE* fp);
 void write_statement(struct Statement* stmt, FILE* fp);
 void write_expression(struct Expression* expr, FILE* fp);
+void write_assignment(struct Assignment* assignment, FILE* fp);
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp);
 
 char* generate_anon_fn_name();
 
+
+#include <stdlib.h>
+#include "parser.h"
+
+typedef struct AssignDynArr {
+    int size, capacity;
+    struct Assignment* assignments;
+} AssignDynArr;
+
+void init_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr);
+void add_assignment_to_arr(struct AssignDynArr* assign_dyn_arr, struct Assignment* assignment_to_add);
+void free_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr);
 
 #endif

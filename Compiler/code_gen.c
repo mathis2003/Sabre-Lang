@@ -12,10 +12,12 @@ typedef struct SwitchNamesPair {
 } SwitchNamesPair;
 
 struct SwitchNamesPair global_switch_pair;
+struct AssignDynArr    assign_dyn_arr;
 
 void generate_code(struct Program* ast_root, char* file_name) {
     global_switch_pair.old_name = NULL;
     global_switch_pair.new_name = NULL;
+    init_assign_dyn_arr(&assign_dyn_arr);
     
     FILE* fp = fopen(file_name, "w");
     if (fp == NULL) {
@@ -33,6 +35,9 @@ void write_entry_point(struct EntryPoint* entry_point, FILE* fp) {
     write_declarations_arr(entry_point->decl_ptr_arr, fp);
     
     fprintf(fp, "int main() {\n");
+    for (int i = 0; i < assign_dyn_arr.size; i++) {
+        write_assignment(&((assign_dyn_arr.assignments)[i]), fp);
+    }
     write_statements_arr(entry_point->stmt_ptr_arr, fp);
     fprintf(fp, "\n\treturn 0;\n");
     fprintf(fp, "}");
@@ -73,18 +78,37 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
             if (i < decl->type.fn_type->amount_of_fn_parameters-1) fprintf(fp, " , ");
         }
         fprintf(fp, ")");
+        
+        if (decl->is_initialized) {
+            fprintf(fp, " = ");
+            fprintf(fp, "&%s", anon_fn_name);
+        }
     } else {
         write_data_type(&(decl->type), fp);
         if (decl->type.is_value == 0) fprintf(fp, "*");
         fprintf(fp, "%s", str_to_c_str(&(decl->identifier)));
-    }
-    
-    if (decl->is_initialized) {
-        fprintf(fp, " = ");
-        if (decl->type.type_enum_val == FN_PTR) {
-            fprintf(fp, "&%s", anon_fn_name);
-        } else {
-            write_expression(decl->init_expr, fp);
+        
+        if (decl->is_initialized) {
+            if (decl->type.is_value) {
+                fprintf(fp, " = ");
+                write_expression(decl->init_expr, fp);
+            } else {
+                // make another assignment and add to array to write at the start of main()
+                struct Assignment assignment;
+                assignment.variable_name = decl->identifier;
+                assignment.left_hand_side_is_variable = 1;
+                if (decl->variable_assigned) {
+                    assignment.right_hand_side_is_variable = 1;
+                    assignment.assigned_variable = decl->init_variable;
+                } else {
+                    fprintf(fp, " = &(");
+                    write_data_type(&(decl->type), fp);
+                    fprintf(fp, "){0}\n");
+                    assignment.right_hand_side_is_variable = 0;
+                    assignment.assigned_value = decl->init_expr;
+                }
+                add_assignment_to_arr(&assign_dyn_arr, &assignment);
+            }
         }
     }
     
@@ -276,7 +300,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
             break;
         }
         case EXPR_VALUE_OF: {
-            fprintf(fp, "$%s", str_to_c_str(&(expr->val_of_op.variable_name)));
+            fprintf(fp, "*%s", str_to_c_str(&(expr->val_of_op.variable_name)));
             break;
         }
             
@@ -288,6 +312,24 @@ void write_expression(struct Expression* expr, FILE* fp) {
             
     }
     fprintf(fp, ")");
+}
+
+void write_assignment(struct Assignment* assignment, FILE* fp) {
+    
+    if (assignment->left_hand_side_is_variable) {
+        if (assignment->right_hand_side_is_variable) {
+            fprintf(fp, "\t%s = ", str_to_c_str(&(assignment->variable_name)));
+            fprintf(fp, "%s", str_to_c_str(&(assignment->assigned_variable)));
+        } else {
+            fprintf(fp, "\t*%s = ", str_to_c_str(&(assignment->variable_name)));
+            write_expression(assignment->assigned_value, fp);
+        }
+    } else {
+        fprintf(fp, "\t%s = ", str_to_c_str(&(assignment->variable_name)));
+        write_expression(assignment->assigned_value, fp);
+    }
+    
+    fprintf(fp, ";\n");
 }
 
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
@@ -340,5 +382,23 @@ char* generate_anon_fn_name() {
     
 }
 
+void init_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr) {
+    assign_dyn_arr->size = 0;
+    assign_dyn_arr->capacity = 100;
+    assign_dyn_arr->assignments = malloc(assign_dyn_arr->capacity * sizeof(struct Assignment));
+}
 
+void add_assignment_to_arr(struct AssignDynArr* assign_dyn_arr, struct Assignment* assignment_to_add) {
+    if (assign_dyn_arr->size >= assign_dyn_arr->capacity - 1) {
+        assign_dyn_arr->capacity = 2 * assign_dyn_arr->capacity;
+        assign_dyn_arr->assignments = realloc(assign_dyn_arr->assignments, assign_dyn_arr->capacity * sizeof(struct Assignment));
+    }
+    assign_dyn_arr->assignments[assign_dyn_arr->size] = *assignment_to_add;
+    assign_dyn_arr->size += 1;
+}
+
+void free_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr) {
+    free(assign_dyn_arr->assignments);
+    free(assign_dyn_arr);
+}
 

@@ -94,14 +94,17 @@ typedef struct BinOp {
 
 typedef struct Assignment {
     unsigned int left_hand_side_is_variable : 1;
+    unsigned int right_hand_side_is_variable : 1;
     union {
         struct StringStruct variable_name;
         struct ScopeObject  scope_object;
     };
+    
     unsigned int assigned_val_is_fn : 1;
     union {
-        struct Expression* assigned_value;
-        struct FnLiteral* assigned_fn_literal;
+        struct StringStruct assigned_variable;
+        struct Expression*  assigned_value;
+        struct FnLiteral*   assigned_fn_literal;
     };
     
 } Assignment;
