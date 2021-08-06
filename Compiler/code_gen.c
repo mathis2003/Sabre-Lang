@@ -56,7 +56,11 @@ void write_entry_point(struct EntryPoint* entry_point, FILE* fp) {
 
 void write_import_arr(struct ImportList* import_list, FILE* fp) {
     for (int i = 0; i < import_list->amount_of_imported_files; i++) {
-        fprintf(fp, "\n#include <%s>\n", str_to_c_str(&(import_list->imported_files[i])));
+        if ((import_list->is_local_file_flags[i])) {
+            fprintf(fp, "\n#include \"%s\"\n", str_to_c_str(&(import_list->imported_files[i])));
+        } else {
+            fprintf(fp, "\n#include <%s>\n", str_to_c_str(&(import_list->imported_files[i])));
+        }
     }
 }
 

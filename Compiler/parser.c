@@ -492,21 +492,33 @@ void parse_imports(struct ImportList* import_list_ptr) {
     eat_token(TOK_OPEN_CURLY); // skips over "{"
     import_list_ptr->amount_of_imported_files = count_tokens_until_end_token_found(TOK_ASTERISK, TOK_CLOSE_CURLY);
     
-    import_list_ptr->imported_files = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
-    import_list_ptr->namespaces     = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
+    import_list_ptr->imported_files       = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
+    import_list_ptr->is_local_file_flags  = malloc(import_list_ptr->amount_of_imported_files * sizeof(char));
+    import_list_ptr->namespaces           = malloc(import_list_ptr->amount_of_imported_files * sizeof(struct StringStruct));
     
     // for now, don't parse the "as"- namespaces yet, just assume C headers
     for (int i = 0; i < import_list_ptr->amount_of_imported_files; i++) {
         eat_token(TOK_ASTERISK);
-        if (cur_token_ptr->tok_type == TOK_STRING) {
-            import_list_ptr->imported_files[i] = cur_token_ptr->name_str;
+        if (get_tok_type(cur_token_ptr) == TOK_STRING) {
+            import_list_ptr->imported_files[i]      = cur_token_ptr->name_str;
+            import_list_ptr->is_local_file_flags[i] = 1;
+            next_token(); // skips over imported file's name
+            //import_list_ptr->namespaces[i]     = {};
+        } else if (get_tok_type(cur_token_ptr) == TOK_OPEN_ANGLE_BRACKET) {
+            next_token(); // skip over open angle bracket
+            import_list_ptr->imported_files[i]      = str_struct_cat_with_dot(&(cur_token_ptr->name_str), &(peek_token(2)->name_str));
+            import_list_ptr->is_local_file_flags[i] = 0;
+            next_token(); // skips over imported file's name
+            next_token(); // skips over imported file's name
+            next_token(); // skips over imported file's name
+            printf("cur_tok: %d\n", get_tok_type(cur_token_ptr));
+            eat_token(TOK_CLOSE_ANGLE_BRACKET);
             //import_list_ptr->namespaces[i]     = {};
         } else {
-            // NOOOOO!!!! ERROR!!!!!!
-            return;
+            die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
         }
         
-        next_token(); // skips over imported file's name
+        
     }
     eat_token(TOK_CLOSE_CURLY);
 }

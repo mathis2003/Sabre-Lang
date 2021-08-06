@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 
+#include "lexer.h"
+
 #include <stdint.h>
 typedef struct MyStruct {
 	uint8_t *a;
@@ -70,6 +72,8 @@ int main() {
 	((printf)(("mult (%d, %d): %d\n") , (4) , (5) , ((mult)((4) , (5) , (0)))));
 	((printf)(("exponent (%d, %d): %d\n") , (2) , (4) , ((exponent)((2) , (4) , (0)))));
 	(m.b = (57));
+	(a = (m.b));
+	((printf)(("a: %d\n") , (a)));
 	((printf)(("m.b = %d\n") , (m.b)));
 	((printf)(("p: %d\n") , ((p)())));
 

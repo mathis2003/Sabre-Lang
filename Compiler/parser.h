@@ -45,6 +45,7 @@ typedef struct ImportList {
     int amount_of_imported_files;
     
     struct StringStruct* imported_files;
+    char*                is_local_file_flags;
     struct StringStruct* namespaces;
     
 } ImportList;
