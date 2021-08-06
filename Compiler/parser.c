@@ -622,17 +622,9 @@ struct Expression* parse_expression() {
             // parse anonymous function call expression
             ;
         }  else {
-            
-            if (str_equals_literal(&(cur_token_ptr->name_str), "scope")) {
-                if ((peek_token(6)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(7)) == TOK_MINUS)) {
-                    expr_ptr = parse_assignment(LEFT_HAND_RET, 1);
-                } 
-            } else {
-                if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
-                else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
-                else expr_ptr = parse_logic_expr();
-            }
-            
+            if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
+            else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
+            else expr_ptr = parse_logic_expr();
         }
     } else if (cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
         expr_ptr = parse_factor();
@@ -645,74 +637,34 @@ struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, c
     Expression assign_expr;
     assign_expr.expr_type = EXPR_ASSIGN;
     assign_expr.assignment.assigned_val_is_fn = 0;
-    
-    if (left_hand_side_type != LEFT_HAND_RET) {
-        assign_expr.assignment.left_hand_side_enum = left_hand_side_type;
-        assign_expr.assignment.variable_name = cur_token_ptr->name_str;
-        next_token(); // skip over identifier
-        
-        if (store_in_operator) {
-            next_token(); // skip over store-in operator
-            next_token(); // skip over store-in operator
-            
-            if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-                (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
-                assign_expr.assignment.right_hand_side_is_variable = 1;
-                assign_expr.assignment.assigned_val_is_fn = 1;
-                assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
-            } else {
-                assign_expr.assignment.right_hand_side_is_variable = 0;
-                assign_expr.assignment.assigned_value = parse_expression();
-            }
-            
-        } else {
-            next_token(); // skip over equals sign
-            if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-                (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
-                assign_expr.assignment.assigned_val_is_fn = 1;
-                assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
-            } else {
-                assign_expr.assignment.assigned_value = parse_expression();
-            }
-        }
-        
-    } else {
-        // left hand side is scope object, so the operatpr has to be "<-"
-        assign_expr.assignment.left_hand_side_enum = LEFT_HAND_RET;
-        next_token(); // skip over "scope"
-        eat_token(TOK_OPEN_SQUARE_BRACKET);
-        
-        if (cur_token_ptr->tok_type == TOK_NUMBER) {
-            assign_expr.assignment.scope_object.index = str_to_int(&(cur_token_ptr->name_str));
-        } else {
-            die("line %d - index in scope[] is not a number but : %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
-        }
-        next_token(); // skip over index number
-        eat_token(TOK_CLOSE_SQUARE_BRACKET);
-        eat_token(TOK_DOT);
-        
-        if (get_tok_type(cur_token_ptr) != TOK_IDENTIFIER || !str_equals_literal(&(cur_token_ptr->name_str), "ret")) {
-            die("line - the object you're trying to access from scope is not valid: %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
-        } else {
-            next_token(); // skip over "ret"
-        }
-        
-        assign_expr.assignment.scope_object.start_lbl    = 0;
-        assign_expr.assignment.scope_object.end_lbl      = 0;
-        assign_expr.assignment.scope_object.exit_lbl     = 0;
-        assign_expr.assignment.scope_object.return_val   = 1;
-        
-        eat_token(TOK_OPEN_ANGLE_BRACKET);
-        eat_token(TOK_MINUS);
-        
+
+    assign_expr.assignment.left_hand_side_enum = left_hand_side_type;
+    assign_expr.assignment.variable_name = cur_token_ptr->name_str;
+    next_token(); // skip over identifier
+
+    if (store_in_operator) {
+        next_token(); // skip over store-in operator
+        next_token(); // skip over store-in operator
+
         if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
             (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+            assign_expr.assignment.right_hand_side_is_variable = 1;
+            assign_expr.assignment.assigned_val_is_fn = 1;
+            assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
+        } else {
+            assign_expr.assignment.right_hand_side_is_variable = 0;
+            assign_expr.assignment.assigned_value = parse_expression();
+        }
+    } else {
+        next_token(); // skip over equals sign
+        if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
+            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+            assign_expr.assignment.assigned_val_is_fn = 1;
             assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
         } else {
             assign_expr.assignment.assigned_value = parse_expression();
         }
     }
-    
     
     Expression* expr_ptr = add_expression_to_bucket(&assign_expr, ast_root_node->allocators.expression_bucket);
     return expr_ptr;
@@ -752,7 +704,7 @@ struct Expression* parse_logic_expr() {
             next_token();
             next_token();
         } else {
-            // parse error
+            die("line %d - unknown operator", cur_token_ptr->line);
         }
         
         right_expr = parse_bool_term();
@@ -826,9 +778,6 @@ struct Expression* parse_cond_term() {
         } else if (cur_token_ptr->tok_type == TOK_MINUS) {
             parent_expr.expr_type = EXPR_SUB;
             next_token();
-        } else {
-            // parse error
-            break;
         }
         
         right_expr = parse_arith_term();
@@ -856,9 +805,6 @@ struct Expression* parse_arith_term() {
         } else if (cur_token_ptr->tok_type == TOK_SLASH) {
             parent_expr.expr_type = EXPR_DIV;
             next_token();
-        } else {
-            // parse error
-            break;
         }
         
         right_expr = parse_factor();
@@ -950,7 +896,7 @@ struct Expression* parse_fn_call_expr(Expression* fn_ptr) {
             add_void_ptr_to_arr(&(fn_call_expr.fn_call.arg_ptr_arr), (void*)arg);
             if (cur_token_ptr->tok_type == TOK_COMMA) next_token();
             else if (cur_token_ptr->tok_type == TOK_CLOSE_PAREN) break;
-            else ; // NOOOO!!!! ERRRORRRRR!!!
+            else die("line %d - parameter list ended with wrong character", cur_token_ptr->line);
         }
     }
     next_token(); // skips over close paren

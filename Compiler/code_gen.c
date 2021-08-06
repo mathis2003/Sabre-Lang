@@ -332,7 +332,8 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     fprintf(fp, " {\n\t");
     
     write_data_type(&(fn_ptr->return_variable->type), fp);
-    fprintf(fp, " __ret;\n\t");
+    fprintf(fp, " %s;", str_to_c_str(&(fn_ptr->return_variable->identifier)));
+    //fprintf(fp, " __ret;\n\t");
     
     write_import_arr(&(fn_ptr->imports), fp);
     
@@ -343,7 +344,8 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     global_switch_pair.old_name = NULL;
     global_switch_pair.new_name = NULL;
     
-    fprintf(fp, "\n\treturn __ret;\n");
+    //fprintf(fp, "\n\treturn __ret;\n");
+    fprintf(fp, "\n\treturn %s;\n", str_to_c_str(&(fn_ptr->return_variable->identifier)));
     
     fprintf(fp, "\n}\n");
 }
