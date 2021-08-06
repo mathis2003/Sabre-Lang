@@ -51,6 +51,11 @@ printf("p: %d\n", p());
 
 [p = () -> u8 {
 
+	struct MyStruct :[
+		[a: u8]
+		[b : $u16 = 58]
+	]
+
 	scope[0].ret <- ch() + 1;
 	
 	[ch = () -> u32 {

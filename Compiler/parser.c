@@ -118,10 +118,11 @@ struct EntryPoint* parse_entry_point() {
                     add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
                     break;
                 }
+                break;
             }
                 
             default: {
-                // parse error
+                die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
                 break;
             }
                 
@@ -195,8 +196,8 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
                 } else {
                     struct Statement* stmt_ptr = parse_statement(surrounding_scope);
                     add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
-                    break;
                 }
+                break;
             }
                 
             default: {
