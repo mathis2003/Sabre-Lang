@@ -28,8 +28,9 @@ typedef enum DataTypeEnum {
 /* Structs */
 typedef struct DataType {
     // stuff
+    unsigned int is_fn_ptr : 1;
     unsigned int is_value : 1;
-    enum DataTypeEnum type_enum_val;
+    struct StringStruct type_name;
     struct FunctionType* fn_type;
 } DataType;
 
@@ -72,7 +73,7 @@ typedef struct FnLiteral {
     
     struct ImportList imports;
     
-    struct DataType return_type;
+    struct Declaration* return_variable;
     
 } FunctionLiteral;
 

@@ -404,42 +404,20 @@ void print_statements(struct VoidPtrArr* stmt_ptr_arr, int tree_level) {
 
 void print_data_type(struct DataType* data_type_ptr, int tree_level) {
     PRINT_NODE("Type:\n", tree_level);
-    if (data_type_ptr->is_value) { PRINT_NODE("$\n", tree_level); }
-    switch (data_type_ptr->type_enum_val) {
-        case UINT_8: {
-            PRINT_NODE("u8\n", tree_level+1);
-            break;
+    if (data_type_ptr->is_value) { PRINT_NODE("$", tree_level); }
+    if (data_type_ptr->is_fn_ptr) {
+        printf("\n");
+        PRINT_NODE("function\n", tree_level+2);
+        PRINT_NODE("parameters:\n", tree_level+2);
+        struct FunctionType* function_type = data_type_ptr->fn_type;
+        for (int i = 0; i < function_type->amount_of_fn_parameters; i++) {
+            print_data_type(&(function_type->parameter_types[i]), tree_level+3);
         }
-        case UINT_16: {
-            PRINT_NODE("u16\n", tree_level+1);
-            break;
-        }
-        case UINT_32: {
-            PRINT_NODE("u32\n", tree_level+1);
-            break;
-        }
-        case STRING: {
-            PRINT_NODE("String\n", tree_level+1);
-            break;
-        }
-        case FN_PTR: {
-            PRINT_NODE("function\n", tree_level+1);
-            PRINT_NODE("parameters:\n", tree_level+2);
-            struct FunctionType* function_type = data_type_ptr->fn_type;
-            for (int i = 0; i < function_type->amount_of_fn_parameters; i++) {
-                print_data_type(&(function_type->parameter_types[i]), tree_level+3);
-            }
-            PRINT_NODE("return type:\n", tree_level+2);
-            print_data_type(&(function_type->return_type), tree_level+3);
-            break;
-        }
-        case UNIT: {
-            PRINT_NODE("Unit\n", tree_level+1);
-            break;
-        }
-            
-        default:
-            break;
+        PRINT_NODE("return type:", tree_level+2);
+        print_data_type(&(function_type->return_type), tree_level+3);
+    } else {
+        print_str_struct(&(data_type_ptr->type_name));
+        printf("\n");
     }
 }
 
@@ -447,7 +425,7 @@ void print_init_val(struct Declaration* decl_ptr, int tree_level) {
     PRINT_NODE("init val:\n", tree_level);
     
     if (decl_ptr->type.is_value) {
-        if (decl_ptr->type.type_enum_val == FN_PTR) {
+        if (decl_ptr->type.is_fn_ptr) {
             print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
         } else print_expression(decl_ptr->init_expr, tree_level);
     } else {
@@ -455,7 +433,7 @@ void print_init_val(struct Declaration* decl_ptr, int tree_level) {
             PRINT_NODE("", tree_level+1);
             print_str_struct(&(decl_ptr->init_variable));
         } else {
-            if (decl_ptr->type.type_enum_val == FN_PTR) {
+            if (decl_ptr->type.is_fn_ptr) {
                 print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
             } else print_expression(decl_ptr->init_expr, tree_level);
         }
@@ -494,7 +472,7 @@ void print_fn_literal(struct FnLiteral* fn_literal, int tree_level) {
     }
     
     PRINT_NODE("Return Type:\n", tree_level + 1);
-    print_data_type(&(fn_literal->return_type), tree_level+1);
+    print_data_type(&(fn_literal->return_variable->type), tree_level+1);
 
     print_import_list(&(fn_literal->imports), tree_level + 1);
     print_struct_types(&(fn_literal->struct_type_ptr_arr), tree_level+1);

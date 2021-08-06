@@ -63,7 +63,7 @@ void write_statements_arr(struct VoidPtrArr stmt_ptr_arr, FILE* fp) {
 
 void write_declaration(struct Declaration* decl, FILE* fp) {
     char* anon_fn_name = NULL;
-    if (decl->type.type_enum_val == FN_PTR) {
+    if (decl->type.is_fn_ptr) {
         if (decl->is_initialized) {
             anon_fn_name = generate_anon_fn_name();
             write_fn_literal(anon_fn_name, decl->init_fn_ptr, fp);
@@ -116,48 +116,28 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
 }
 
 void write_data_type (DataType* data_type, FILE* fp) {
-    switch (data_type->type_enum_val) {
-        case UNIT: {
+    if (data_type->is_fn_ptr) {
+        write_data_type(&(data_type->fn_type->return_type), fp);
+        fprintf(fp, " (*) ");
+        fprintf(fp, "(");
+        for (int i = 0; i < data_type->fn_type->amount_of_fn_parameters; i++) {
+            write_data_type(&(data_type->fn_type->parameter_types[i]), fp);
+            if (i < data_type->fn_type->amount_of_fn_parameters-1) fprintf(fp, " , ");
+        }
+        fprintf(fp, ")");
+    } else {
+        if (str_equals_literal(&(data_type->type_name), "Unit")) {
             fprintf(fp, "void ");
-            break;
-        }
-        case UINT_8: {
+        } else if (str_equals_literal(&(data_type->type_name), "u8")) {
             fprintf(fp, "uint8_t ");
-            break;
-        }
-        case UINT_16: {
+        } else if (str_equals_literal(&(data_type->type_name), "u16")) {
             fprintf(fp, "uint16_t ");
-            break;
-        }
-        case UINT_32: {
+        } else if (str_equals_literal(&(data_type->type_name), "u32")) {
             fprintf(fp, "uint32_t ");
-            break;
+        } else {
+            fprintf(fp, "%s ", str_to_c_str(&(data_type->type_name)));
         }
-        case STRING: {
-            fprintf(fp, "char* ");
-            break;
-        }
-        case FN_PTR: {
-            write_data_type(&(data_type->fn_type->return_type), fp);
-            fprintf(fp, " (*) ");
-            fprintf(fp, "(");
-            for (int i = 0; i < data_type->fn_type->amount_of_fn_parameters; i++) {
-                write_data_type(&(data_type->fn_type->parameter_types[i]), fp);
-                if (i < data_type->fn_type->amount_of_fn_parameters-1) fprintf(fp, " , ");
-            }
-            fprintf(fp, ")");
-            break;
-        }
-        case DATA_BOOL: {
-           //<#statements#>
-            break;
-        }
-            
-            
-        default:
-            break;
     }
-    
 }
 
 void write_statement(struct Statement* stmt, FILE* fp) {
@@ -340,7 +320,7 @@ void write_assignment(struct Assignment* assignment, FILE* fp) {
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
     
-    write_data_type(&(fn_ptr->return_type), fp);
+    write_data_type(&(fn_ptr->return_variable->type), fp);
     fprintf(fp, " %s ", fn_name);
     fprintf(fp, "(");
     for (int i = 0; i < fn_ptr->param_decl_ptr_arr.size; i++) {
@@ -351,7 +331,7 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     fprintf(fp, ")");
     fprintf(fp, " {\n\t");
     
-    write_data_type(&(fn_ptr->return_type), fp);
+    write_data_type(&(fn_ptr->return_variable->type), fp);
     fprintf(fp, " __ret;\n\t");
     
     write_import_arr(&(fn_ptr->imports), fp);

@@ -148,10 +148,9 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     
     // parse function parameters
     if (get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY) {
-        struct DataType datatype;
-        datatype.is_value = 1;
-        datatype.type_enum_val = UNIT;
-        ret_fn_literal.return_type = datatype;
+        Declaration decl;
+        decl.type.type_name = c_str_to_str_struct("Unit");
+        ret_fn_literal.return_variable = add_declaration_to_bucket(&decl, ast_root_node->allocators.declaration_bucket);
     } else {
         eat_token(TOK_OPEN_PAREN);
         if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
@@ -166,7 +165,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
         eat_token(TOK_MINUS);
         eat_token(TOK_CLOSE_ANGLE_BRACKET);
         
-        ret_fn_literal.return_type = parse_data_type();
+        ret_fn_literal.return_variable = parse_declaration(NULL);
     }
     
     
@@ -318,7 +317,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             
             if (decl.type.is_value) {
                 decl.variable_assigned = 0;
-                if (decl.type.type_enum_val == FN_PTR) {
+                if (decl.type.is_fn_ptr) {
                     decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                 } else {
                     decl.init_expr = parse_expression();
@@ -344,7 +343,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 die("line %d - can't put a value inside a value, the operator should be '=' instead of '<-'\n", cur_token_ptr->line);
             }
             
-            if (decl.type.type_enum_val == FN_PTR) {
+            if (decl.type.is_fn_ptr) {
                 decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
             } else {
                 decl.init_expr = parse_expression();
@@ -364,37 +363,35 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
         if (cur_token_ptr->tok_type == TOK_EQUALS) {
             next_token(); // skip over equals sign
             decl.is_initialized = 1;
+            decl.type.is_fn_ptr = 0;
+            decl.type.is_value = 0;
             
             switch (get_tok_type(cur_token_ptr)) {
                 case TOK_OPEN_PAREN: {
                     if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
-                        decl.type.type_enum_val = FN_PTR;
+                        decl.type.is_fn_ptr = 1;
                         decl.type.is_value = 1;
                         decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                         
                         decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
                     } else {
-                        //expression
+                        decl.init_expr = parse_expression();
                     }
                     break;
                 }
                 case TOK_OPEN_CURLY: {
-                    decl.type.type_enum_val = FN_PTR;
+                    decl.type.is_fn_ptr = 1;
                     decl.type.is_value = 1;
                     decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                     decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
                     break;
                 }
                 case TOK_IDENTIFIER: {
-                    decl.type.is_value = 0;
                     decl.init_variable = cur_token_ptr->name_str;
                     break;
                 }
                 case TOK_INVALID: {
-                    // NOOOOO!!! PANICK!!!! ERROR!!!
                     die("line %d - the expression in this declaration is incorrect\n", cur_token_ptr->line);
-                    return NULL;
-                    break;
                 }
                     
                 default: {
@@ -416,16 +413,17 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             switch (get_tok_type(cur_token_ptr)) {
                 case TOK_OPEN_PAREN: {
                     if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
-                        decl.type.type_enum_val = FN_PTR;
+                        decl.type.is_fn_ptr = 1;
                         decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                         decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
                     } else {
-                        // expression
+                        decl.type.is_fn_ptr = 0;
+                        decl.init_expr = parse_expression();
                     }
                     break;
                 }
                 case TOK_OPEN_CURLY: {
-                    decl.type.type_enum_val = FN_PTR;
+                    decl.type.is_fn_ptr = 1;
                     decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
                     decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
                     break;
@@ -526,7 +524,7 @@ struct DataType parse_data_type() {
     if (cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
         // type is a "value"
         data_type.is_value = 1;
-        next_token(); // skip over dollar_sign token
+        next_token(); // skip over dollar sign
     } else {
         // type is a "variable"
         data_type.is_value = 0;
@@ -534,18 +532,12 @@ struct DataType parse_data_type() {
     
     if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         // parse a non function type
-        if (str_equals_literal(&(cur_token_ptr->name_str), "u8"))          data_type.type_enum_val = UINT_8;
-        else if (str_equals_literal(&(cur_token_ptr->name_str), "u16"))    data_type.type_enum_val = UINT_16;
-        else if (str_equals_literal(&(cur_token_ptr->name_str), "u32"))    data_type.type_enum_val = UINT_32;
-        else if (str_equals_literal(&(cur_token_ptr->name_str), "Unit"))   data_type.type_enum_val = UNIT;
-        else if (str_equals_literal(&(cur_token_ptr->name_str), "String")) data_type.type_enum_val = STRING;
-        else {
-            die("line %d - invalid datatype: %s\n", cur_token_ptr->line, str_to_c_str(&(cur_token_ptr->name_str)));
-        }
+        data_type.is_fn_ptr = 0;
+        data_type.type_name = cur_token_ptr->name_str;
         next_token(); // skip over type
     } else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
         // parse a function type
-        data_type.type_enum_val = FN_PTR;
+        data_type.is_fn_ptr = 1;
         data_type.fn_type = parse_function_type();
     }
     
@@ -601,7 +593,7 @@ struct FunctionType* parse_fn_literal_to_function_type(struct FnLiteral* fn_lite
     /*----------------------------------------------------------------------------------------------------------*/
     {
         // TODO: parse return type
-        function_type_ptr->return_type = fn_literal->return_type;
+        function_type_ptr->return_type = fn_literal->return_variable->type;
     }
     /*----------------------------------------------------------------------------------------------------------*/
     

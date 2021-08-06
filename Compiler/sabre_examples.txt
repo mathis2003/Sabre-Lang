@@ -25,21 +25,21 @@ struct MyStruct :[
 	[b : $u16 = 58]
 ]
 
-[factorial = (n : $u32) -> $u32 {
+[factorial = (n : $u32) -> [x1 : $u32] {
 	scope[0].ret <- if (n > 1) then n * this(n-1) else 1;
 }]
 
-[fibonacci = (n: $u32) -> $u32 {
+[fibonacci = (n: $u32) -> [x2 : $u32] {
 	scope[0].ret <- if (n > 1) then this(n-1) + this(n-2) 
 			else if (n == 1) then 1
 			else 0;
 }]
 
-[mult = (f1: $u32, f2: $u32, n: $u32) -> $u32 {
+[mult = (f1: $u32, f2: $u32, n: $u32) -> [x3 : $u32] {
 	scope[0].ret <- if (n < f2) then f1 + this(f1, f2, n+1) else 0;
 }]
 
-[exponent = (base: $u32, e: $u32, n: $u32) -> $u32 {
+[exponent = (base: $u32, e: $u32, n: $u32) -> [x4 : $u32] {
 	scope[0].ret <- if (n < e) then base * this(base, e, n+1) else 1;
 }]
 
@@ -49,7 +49,7 @@ struct MyStruct :[
 ----- DEMO OF NESTED FUNCTION -----
 printf("p: %d\n", p());
 
-[p = () -> u8 {
+[p = () -> [x5 : u8] {
 
 	struct MyStruct :[
 		[a: u8]
@@ -58,8 +58,22 @@ printf("p: %d\n", p());
 
 	scope[0].ret <- ch() + 1;
 	
-	[ch = () -> u32 {
+	[ch = () -> [x6 : $u32] {
 		scope[0].ret <- 5;
 	}]
+
+}]
+
+|""
+
+[f1 = {
+	loop(i, 10);
+	printf("loop result: %d", i);
+
+	[i : u32 = 0]
+	[loop = (i_capture : u32, acc : $u32) -> $u32{
+		scope[0].ret <- if (acc < 10) loop(i_capture, acc-1) else (i_capture <- acc);
+	}]
+
 
 }]

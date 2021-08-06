@@ -37,3 +37,21 @@ char* str_to_c_str(struct StringStruct* str) {
     
     return ret_str;
 }
+
+struct StringStruct c_str_to_str_struct(char* c_string) {
+    int length = 0;
+    
+    for (int i = 0; c_string[i] != '\0'; i++) {
+        length++;
+    }
+    
+    struct StringStruct ret_str;
+    ret_str.str_length = length;
+    ret_str.str_start = malloc(ret_str.str_length * sizeof(char));
+    
+    for (int i = 0; i < ret_str.str_length; i++) {
+        ret_str.str_start[i] = c_string[i];
+    }
+    
+    return ret_str;
+}
