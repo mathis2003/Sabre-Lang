@@ -6,7 +6,7 @@ import {
 
 ---- STATEMENTS ----
 
-c <- (($c) + (8));
+c <- $c + 8;
 printf("a = %d | b = %d | c = %d\n", a, $b, $c);
 printf("Hello, World!\n");
 printf("factorial: %d\n", factorial(a));

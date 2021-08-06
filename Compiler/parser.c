@@ -610,10 +610,9 @@ struct Expression* parse_expression() {
     if (cur_token_ptr->tok_type == TOK_NUMBER     ||
         cur_token_ptr->tok_type == TOK_BOOL       ||
         cur_token_ptr->tok_type == TOK_OPEN_PAREN ||
-        cur_token_ptr->tok_type == TOK_STRING) {
-        // parse boolean operand
+        cur_token_ptr->tok_type == TOK_STRING     ||
+        cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
         expr_ptr = parse_logic_expr();
-        
     }
     else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
@@ -626,8 +625,6 @@ struct Expression* parse_expression() {
             else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
             else expr_ptr = parse_logic_expr();
         }
-    } else if (cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
-        expr_ptr = parse_factor();
     }
     
     return expr_ptr;
