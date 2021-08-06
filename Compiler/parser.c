@@ -623,6 +623,8 @@ struct Expression* parse_expression() {
         }  else {
             if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
             else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
+            else if ((peek_token(3)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(4)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
+            else if ((get_tok_type(peek_token(3)) == TOK_EQUALS && get_tok_type(peek_token(4)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
             else expr_ptr = parse_logic_expr();
         }
     }
@@ -638,6 +640,19 @@ struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, c
     assign_expr.assignment.left_hand_side_enum = left_hand_side_type;
     assign_expr.assignment.variable_name = cur_token_ptr->name_str;
     next_token(); // skip over identifier
+    if (get_tok_type(cur_token_ptr) == TOK_DOT && get_tok_type(peek_token(1)) == TOK_IDENTIFIER) {
+        assign_expr.assignment.variable_name = str_struct_cat_with_dot(&(assign_expr.assignment.variable_name), &(peek_token(1)->name_str));
+        next_token(); // skip over dot
+        next_token(); // skip over second identifier
+        //print_str_struct()
+    } else if (get_tok_type(cur_token_ptr) == TOK_MINUS && get_tok_type(peek_token(1)) == TOK_CLOSE_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_IDENTIFIER) {
+        // concatenate string with arrow
+        assign_expr.assignment.variable_name = str_struct_cat_with_arrow(&(assign_expr.assignment.variable_name), &(peek_token(2)->name_str));
+        next_token(); // skip over minus
+        next_token(); // skip over closing angle bracket
+        next_token(); // skip over second identifier
+        //print_str_struct()
+    }
 
     if (store_in_operator) {
         next_token(); // skip over store-in operator
@@ -662,7 +677,6 @@ struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, c
             assign_expr.assignment.assigned_value = parse_expression();
         }
     }
-    
     Expression* expr_ptr = add_expression_to_bucket(&assign_expr, ast_root_node->allocators.expression_bucket);
     return expr_ptr;
 }
@@ -838,11 +852,23 @@ struct Expression* parse_factor() {
     Expression* ret_expr;
     // basically, the options here are: an expression between parentheses, a function call, or a literal, or a value-of operator and identifier
     if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
-            struct Expression var_literal_expr;
-            var_literal_expr.expr_type = EXPR_VAR_LITERAL;
-            var_literal_expr.variable_literal = cur_token_ptr->name_str;
-            ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
-            next_token();
+        struct Expression var_literal_expr;
+        var_literal_expr.expr_type = EXPR_VAR_LITERAL;
+        var_literal_expr.variable_literal = cur_token_ptr->name_str;
+        next_token();
+        if (get_tok_type(cur_token_ptr) == TOK_DOT && get_tok_type(peek_token(1)) == TOK_IDENTIFIER) {
+            var_literal_expr.variable_literal = str_struct_cat_with_dot(&(var_literal_expr.variable_literal), &(peek_token(1)->name_str));
+            next_token(); // skip over dot
+            next_token(); // skip over second identifier
+        } else if (get_tok_type(cur_token_ptr) == TOK_MINUS && get_tok_type(peek_token(1)) == TOK_CLOSE_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_IDENTIFIER) {
+            var_literal_expr.variable_literal = str_struct_cat_with_arrow(&(var_literal_expr.variable_literal), &(peek_token(2)->name_str));
+            next_token(); // skip over minus
+            next_token(); // skip over closing angle bracket
+            next_token(); // skip over second identifier
+            //print_str_struct()
+        }
+        
+        ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
     }
     else if (cur_token_ptr->tok_type == TOK_NUMBER) {
         struct Expression number_literal_expr;

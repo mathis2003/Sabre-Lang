@@ -4,6 +4,8 @@
 void generate_code(struct Program* ast_root, char* file_name);
 void write_entry_point(struct EntryPoint* entry_point, FILE* fp);
 void write_import_arr(struct ImportList* import_list, FILE* fp);
+void write_struct_definitions(struct VoidPtrArr struct_type_ptr_arr, FILE* fp);
+void write_struct_definition(struct StructType* struct_type, FILE* fp);
 void write_declarations_arr(struct VoidPtrArr decl_ptr_arr, FILE* fp);
 void write_statements_arr(struct VoidPtrArr stmt_ptr_arr, FILE* fp);
 void write_declaration(struct Declaration* decl, FILE* fp);

@@ -2,38 +2,44 @@
 #include <stdio.h>
 
 #include <stdint.h>
+typedef struct MyStruct {
+	uint8_t *a;
+	uint16_t b;
+} MyStruct;
 uint32_t a = (6);
 uint32_t *b = &(uint32_t ){0};
 uint32_t *c;
+MyStruct m;
+;
 uint32_t  anon0 (uint32_t  n) {
-	uint32_t  x1;
-	(x1 = (((n)>(1)) ? ((n)*((anon0)(((n)-(1))))) : (1)));
+	uint32_t  x;
+	(x = (((n)>(1)) ? ((n)*((anon0)(((n)-(1))))) : (1)));
 
-	return x1;
+	return x;
 
 }
 uint32_t (*factorial)(uint32_t ) = &anon0;
 uint32_t  anon1 (uint32_t  n) {
-	uint32_t  x2;
-	(x2 = (((n)>(1)) ? (((anon1)(((n)-(1))))+((anon1)(((n)-(2))))) : (((n)==(1)) ? (1) : (0))));
+	uint32_t  result;
+	(result = (((n)>(1)) ? (((anon1)(((n)-(1))))+((anon1)(((n)-(2))))) : (((n)==(1)) ? (1) : (0))));
 
-	return x2;
+	return result;
 
 }
 uint32_t (*fibonacci)(uint32_t ) = &anon1;
 uint32_t  anon2 (uint32_t  f1 , uint32_t  f2 , uint32_t  n) {
-	uint32_t  x3;
-	(x3 = (((n)<(f2)) ? ((f1)+((anon2)((f1) , (f2) , ((n)+(1))))) : (0)));
+	uint32_t  x;
+	(x = (((n)<(f2)) ? ((f1)+((anon2)((f1) , (f2) , ((n)+(1))))) : (0)));
 
-	return x3;
+	return x;
 
 }
 uint32_t (*mult)(uint32_t  , uint32_t  , uint32_t ) = &anon2;
 uint32_t  anon3 (uint32_t  base , uint32_t  e , uint32_t  n) {
-	uint32_t  x4;
-	(x4 = (((n)<(e)) ? ((base)*((anon3)((base) , (e) , ((n)+(1))))) : (1)));
+	uint32_t  x;
+	(x = (((n)<(e)) ? ((base)*((anon3)((base) , (e) , ((n)+(1))))) : (1)));
 
-	return x4;
+	return x;
 
 }
 uint32_t (*exponent)(uint32_t  , uint32_t  , uint32_t ) = &anon3;
@@ -63,6 +69,8 @@ int main() {
 	((printf)(("fibonacci: %d\n") , ((fibonacci)((a)))));
 	((printf)(("mult (%d, %d): %d\n") , (4) , (5) , ((mult)((4) , (5) , (0)))));
 	((printf)(("exponent (%d, %d): %d\n") , (2) , (4) , ((exponent)((2) , (4) , (0)))));
+	(m.b = (57));
+	((printf)(("m.b = %d\n") , (m.b)));
 	((printf)(("p: %d\n") , ((p)())));
 
 	return 0;

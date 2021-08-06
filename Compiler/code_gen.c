@@ -13,10 +13,14 @@ typedef struct SwitchNamesPair {
 
 struct SwitchNamesPair global_switch_pair;
 struct AssignDynArr    assign_dyn_arr;
+int struct_definition_from_entry_point = 1;
+
+struct VoidPtrArr struct_types;
 
 void generate_code(struct Program* ast_root, char* file_name) {
     global_switch_pair.old_name = NULL;
     global_switch_pair.new_name = NULL;
+    struct_types.void_ptrs = NULL;
     init_assign_dyn_arr(&assign_dyn_arr);
     
     FILE* fp = fopen(file_name, "w");
@@ -32,6 +36,13 @@ void generate_code(struct Program* ast_root, char* file_name) {
 void write_entry_point(struct EntryPoint* entry_point, FILE* fp) {
     write_import_arr(&(entry_point->imports), fp);
     fprintf(fp, "\n#include <stdint.h>\n");
+    
+    // struct definitions
+    struct_types = entry_point->struct_type_ptr_arr;
+    
+    struct_definition_from_entry_point = 1;
+    write_struct_definitions(entry_point->struct_type_ptr_arr, fp);
+    
     write_declarations_arr(entry_point->decl_ptr_arr, fp);
     
     fprintf(fp, "int main() {\n");
@@ -47,6 +58,42 @@ void write_import_arr(struct ImportList* import_list, FILE* fp) {
     for (int i = 0; i < import_list->amount_of_imported_files; i++) {
         fprintf(fp, "\n#include <%s>\n", str_to_c_str(&(import_list->imported_files[i])));
     }
+}
+
+void write_struct_definitions(struct VoidPtrArr struct_type_ptr_arr, FILE* fp) {
+    for (int i = 0; i < struct_type_ptr_arr.size; i++) {
+        write_struct_definition(((struct StructType*)((struct_type_ptr_arr.void_ptrs)[i])), fp);
+    }
+}
+
+void write_struct_definition(struct StructType* struct_type, FILE* fp) {
+    fprintf(fp, "typedef struct %s {\n", str_to_c_str(&(struct_type->struct_name)));
+    
+    for (int i = 0; i < struct_type->amount_of_decls; i++) {
+        struct Declaration* decl = struct_type->decl_ptr_arr[i];
+        
+        fprintf(fp, "\t");
+        if (decl->type.is_fn_ptr) {
+            write_data_type(&(decl->type.fn_type->return_type), fp);
+            if (decl->type.is_value == 0) fprintf(fp, "*");
+            fprintf(fp, "(*%s)", str_to_c_str(&(decl->identifier)));
+            fprintf(fp, "(");
+            for (int i = 0; i < decl->type.fn_type->amount_of_fn_parameters; i++) {
+                write_data_type(&(decl->type.fn_type->parameter_types[i]), fp);
+                if (i < decl->type.fn_type->amount_of_fn_parameters-1) fprintf(fp, " , ");
+            }
+            fprintf(fp, ")");
+            
+        } else {
+            write_data_type(&(decl->type), fp);
+            if (decl->type.is_value == 0) fprintf(fp, "*");
+            fprintf(fp, "%s", str_to_c_str(&(decl->identifier)));
+        }
+        
+        fprintf(fp, ";\n");
+    }
+    
+    fprintf(fp, "} %s;\n", str_to_c_str(&(struct_type->struct_name)));
 }
 
 void write_declarations_arr(struct VoidPtrArr decl_ptr_arr, FILE* fp) {
@@ -108,6 +155,63 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                     assignment.assigned_value = decl->init_expr;
                 }
                 add_assignment_to_arr(&assign_dyn_arr, &assignment);
+            }
+        } else {
+            // the object of the type is not initialized, but perhaps it is a struct and the COMPILER should initialize it
+            if (struct_types.void_ptrs != NULL) {
+                for (int i = 0; i < struct_types.size; i++) {
+                    
+                    struct StructType* cur_struct_type = (struct StructType*)(struct_types.void_ptrs[i]);
+                    if (str_equals_str(&(decl->type.type_name), &(cur_struct_type->struct_name))) {
+                        // found a struct that should really be initialized
+                        fprintf(fp, ";\n");
+                        
+                        if (struct_definition_from_entry_point) {
+                            
+                            // create assignments and add to the dynamic array
+                            // make another assignment and add to array to write at the start of main()
+                            for (int j = 0; j < cur_struct_type->amount_of_decls; j++) {
+                                struct Declaration* decl = (struct Declaration*)((cur_struct_type->decl_ptr_arr)[i]);
+                                struct StringStruct var_name = str_struct_cat_with_dot(&(cur_struct_type->struct_name), &(decl->identifier));
+                                if (decl->is_initialized) {
+                                    
+                                    struct Assignment assignment;
+                                    assignment.variable_name = var_name;
+                                    assignment.left_hand_side_enum = LEFT_HAND_VARIABLE;
+                                    assignment.right_hand_side_is_variable = 0;
+                                    if (decl->type.is_fn_ptr) {
+                                        assignment.assigned_val_is_fn = 1;
+                                        assignment.assigned_fn_literal = decl->init_fn_ptr;
+                                    } else {
+                                        assignment.assigned_val_is_fn = 0;
+                                        assignment.assigned_value = decl->init_expr;
+                                    }
+                                    
+                                    add_assignment_to_arr(&assign_dyn_arr, &assignment);
+                                }
+                            }
+                            
+                        } else {
+                            // write the assignments immediately
+                            for (int j = 0; j < cur_struct_type->amount_of_decls; j++) {
+                                struct Declaration* decl = (struct Declaration*)((cur_struct_type->decl_ptr_arr)[i]);
+                                struct StringStruct var_name = str_struct_cat_with_dot(&(cur_struct_type->struct_name), &(decl->identifier));
+                                if (decl->is_initialized) {
+                                    fprintf(fp, "%s = ", str_to_c_str(&(var_name)));
+                                    if (decl->type.is_fn_ptr) {
+                                        anon_fn_name = generate_anon_fn_name();
+                                        write_fn_literal(anon_fn_name, decl->init_fn_ptr, fp);
+                                    } else {
+                                        write_expression(decl->init_expr, fp);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        break;
+                    }
+                    
+                }
             }
         }
     }
@@ -389,4 +493,3 @@ void free_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr) {
     free(assign_dyn_arr->assignments);
     free(assign_dyn_arr);
 }
-

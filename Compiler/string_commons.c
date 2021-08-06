@@ -13,6 +13,16 @@ int str_equals_literal(struct StringStruct* str, char* str_literal) {
     return 1;
 }
 
+int str_equals_str(struct StringStruct* str1, struct StringStruct* str2) {
+    if (str1->str_length != str2->str_length) return 0;
+    
+    for (int i = 0; i < str1->str_length; i++) {
+        if ((str1->str_start)[i] != (str2->str_start)[i]) return 0;
+    }
+    
+    return 1;
+}
+
 void print_str_struct(struct StringStruct* str) {
     for (int i = 0; i < str->str_length; i++)
         printf("%c", str->str_start[i]);
@@ -54,4 +64,44 @@ struct StringStruct c_str_to_str_struct(char* c_string) {
     }
     
     return ret_str;
+}
+
+struct StringStruct str_struct_cat_with_dot(struct StringStruct* str1, struct StringStruct* str2) {
+    struct StringStruct new_str;
+    new_str.str_length = 1 + str1->str_length + str2->str_length;
+    new_str.str_start = (char*)malloc(new_str.str_length * sizeof(char));
+    
+    int i = 0;
+    for ( ; i < str1->str_length; i++) {
+        new_str.str_start[i] = (str1->str_start)[i];
+    }
+    
+    new_str.str_start[i] = '.';
+    i++;
+    
+    for (int j = 0; j < str2->str_length; j++) {
+        new_str.str_start[i+j] = (str2->str_start)[j];
+    }
+    return new_str;
+}
+
+struct StringStruct str_struct_cat_with_arrow(struct StringStruct* str1, struct StringStruct* str2) {
+    struct StringStruct new_str;
+    new_str.str_length = 2 + str1->str_length + str2->str_length;
+    new_str.str_start = (char*)malloc(new_str.str_length * sizeof(char));
+    
+    int i = 0;
+    for ( ; i < str1->str_length; i++) {
+        new_str.str_start[i] = (str1->str_start)[i];
+    }
+    
+    new_str.str_start[i] = '-';
+    i++;
+    new_str.str_start[i] = '>';
+    i++;
+    
+    for (int j = 0; j < str2->str_length; j++) {
+        new_str.str_start[i+j] = (str2->str_start)[j];
+    }
+    return new_str;
 }
