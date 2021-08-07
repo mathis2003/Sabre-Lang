@@ -939,7 +939,9 @@ struct Token* peek_token(int offset) {
 
 void eat_token(enum TokenType expected_type) {
     if (tok_arr_ptr->tokens[cur_token_index].tok_type != expected_type)  {
-        die("line: %d - expected token type: %s but got a token of type: %s\n", cur_token_ptr->line, get_tok_name(cur_token_ptr), get_tok_name(cur_token_ptr));
+        Token tok;
+        tok.tok_type = expected_type;
+        die("line: %d - expected token type: %s but got a token of type: %s\n", cur_token_ptr->line, get_tok_name(&tok), get_tok_name(cur_token_ptr));
     }
     next_token();
 }
