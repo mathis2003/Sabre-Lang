@@ -840,20 +840,6 @@ struct Expression* parse_factor() {
         var_literal_expr.identifier_literal = cur_token_ptr->name_str;
         next_token();
         
-        /* delete this once we're refactoring struct type parsing */
-        if (get_tok_type(cur_token_ptr) == TOK_DOT && get_tok_type(peek_token(1)) == TOK_IDENTIFIER) {
-            var_literal_expr.identifier_literal = str_struct_cat_with_dot(&(var_literal_expr.identifier_literal), &(peek_token(1)->name_str));
-            next_token(); // skip over dot
-            next_token(); // skip over second identifier
-        } else if (get_tok_type(cur_token_ptr) == TOK_MINUS && get_tok_type(peek_token(1)) == TOK_CLOSE_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_IDENTIFIER) {
-            var_literal_expr.identifier_literal = str_struct_cat_with_arrow(&(var_literal_expr.identifier_literal), &(peek_token(2)->name_str));
-            next_token(); // skip over minus
-            next_token(); // skip over closing angle bracket
-            next_token(); // skip over second identifier
-            //print_str_struct()
-        }
-        /* delete this once we're refactoring struct type parsing */
-        
         ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
     }
     else if (cur_token_ptr->tok_type == TOK_NUMBER) {
@@ -885,15 +871,36 @@ struct Expression* parse_factor() {
         ret_expr = parse_fn_call_expr(ret_expr);
         
     } // check if there's a dot following up, in that case: member access
-    /*else if (get_tok_type(cur_token_ptr) == TOK_DOT) {
-        // this needs to be implemented when refactoring struct type parsing
-    }*/ // check if there's a dot following up, in that case: member access
+    else if (get_tok_type(cur_token_ptr) == TOK_DOT) {
+        ret_expr = parse_member_access_op(ret_expr);
+    } // check if there's an assignment operator following up, in that case: assignment
     else if ((get_tok_type(cur_token_ptr) == TOK_EQUALS && get_tok_type(peek_token(1)) != TOK_EQUALS)||
              (get_tok_type(cur_token_ptr) == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(1)) == TOK_MINUS)) {
         ret_expr = parse_assignment(ret_expr);
     }
     
     return ret_expr;
+}
+
+struct Expression* parse_member_access_op(Expression* parent) {
+    Expression* left_expr = parent;
+    
+    while (cur_token_ptr->tok_type == TOK_DOT) {
+        Expression parent_expr;
+        Expression* right_expr;
+        
+        parent_expr.expr_type = EXPR_MEMBER_ACCESS;
+        next_token();
+        
+        right_expr = parse_factor();
+        
+        parent_expr.member_access_op.parent = left_expr;
+        parent_expr.member_access_op.member = right_expr;
+        
+        left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
+    }
+    
+    return left_expr;
 }
 
 struct Expression* parse_fn_call_expr(Expression* fn_ptr) {

@@ -115,22 +115,27 @@ typedef struct ValueOfOp {
     struct StringStruct variable_name;
 } ValueOfOp;
 
+typedef struct MemberAccessOP {
+    struct Expression* parent;
+    struct Expression* member;
+} MemberAccessOP;
+
 typedef struct Expression {
     enum ExpressionType expr_type;
     
     union {
         // literals
-        long int            int_literal;
-        char                char_literal;
-        struct StringStruct string_literal;
-        struct StringStruct identifier_literal;
+        long int              int_literal;
+        char                  char_literal;
+        struct StringStruct   string_literal;
+        struct StringStruct   identifier_literal;
         //struct FnLiteral*   fn_ptr_literal;
-        struct BinOp        bin_op;
-        struct TernOp       tern_op;
-        struct FnCall       fn_call;
-        struct Assignment   assignment;
-        struct ValueOfOp    val_of_op;
-        
+        struct BinOp          bin_op;
+        struct TernOp         tern_op;
+        struct FnCall         fn_call;
+        struct Assignment     assignment;
+        struct ValueOfOp      val_of_op;
+        struct MemberAccessOP member_access_op;
         
     };
     
@@ -303,6 +308,7 @@ struct Expression* parse_cond_term();
 struct Expression* parse_arith_term();
 struct Expression* parse_value_of_term();
 struct Expression* parse_factor();
+struct Expression* parse_member_access_op(Expression* parent);
 struct Expression* parse_fn_call_expr(Expression* fn_ptr);
 
 struct Token* next_token();

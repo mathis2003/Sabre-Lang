@@ -316,7 +316,7 @@ void print_expression(Expression* expr, int tree_level) {
             print_expression(expr->assignment.left, tree_level+2);
             
             if (expr->assignment.arrow_operator) {
-                PRINT_NODE("operator: \'->\'\n", tree_level+1);
+                PRINT_NODE("operator: \'<-\'\n", tree_level+1);
             } else {
                 PRINT_NODE("operator: \'=\'\n", tree_level+1);
             }
@@ -356,6 +356,15 @@ void print_expression(Expression* expr, int tree_level) {
             PRINT_NODE("type: value of ($)\n", tree_level+1);
             PRINT_NODE("variable: ", tree_level+1);
             print_str_struct(&(expr->val_of_op.variable_name));
+            printf("\n");
+            break;
+        }
+        case EXPR_MEMBER_ACCESS: {
+            PRINT_NODE("type: member access\n", tree_level+1);
+            PRINT_NODE("parent:\n", tree_level+1);
+            print_expression(expr->member_access_op.parent, tree_level+1);
+            PRINT_NODE("member:\n", tree_level+1);
+            print_expression(expr->member_access_op.member, tree_level+1);
             printf("\n");
             break;
         }
