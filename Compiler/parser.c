@@ -122,7 +122,7 @@ struct EntryPoint* parse_entry_point() {
             }
                 
             default: {
-                die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
+                die("line %d - unexpected token: %s", cur_token_ptr->line, get_tok_name(cur_token_ptr));
                 break;
             }
                 
@@ -200,7 +200,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             }
                 
             default: {
-                die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
+                die("line %d - unexpected token: %s", cur_token_ptr->line, get_tok_name(cur_token_ptr));
                 break;
             }
                 
@@ -269,7 +269,7 @@ void parse_cfi(struct Statement* stmt) {
     if (cur_token_ptr->tok_type == TOK_NUMBER) {
         cfi.scope_obj.index = str_to_int(&(cur_token_ptr->name_str));
     } else {
-        die("line %d - the index should be a number, instead got a token of type: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
+        die("line %d - the index should be a number, instead got a token : %s", cur_token_ptr->line, get_tok_name(cur_token_ptr));
     }
     next_token(); // skip over number
     
@@ -293,7 +293,7 @@ void parse_cfi(struct Statement* stmt) {
             die("line %d - can't lead control flow to: %s", cur_token_ptr->line, str_to_c_str(&(cur_token_ptr->name_str)));
         }
     } else {
-        die("line %d - expected an accessible member of the scope but got a token of type: %d\n", cur_token_ptr->line, cur_token_ptr->tok_type);
+        die("line %d - expected an accessible member of the scope but got token: %s\n", cur_token_ptr->line, get_tok_name(cur_token_ptr));
     }
     
     next_token(); // skip over "start", "end" or "exit"
@@ -501,7 +501,7 @@ void parse_imports(struct ImportList* import_list_ptr) {
             eat_token(TOK_CLOSE_ANGLE_BRACKET);
             //import_list_ptr->namespaces[i]     = {};
         } else {
-            die("line %d - unexpected token: %d", cur_token_ptr->line, get_tok_type(cur_token_ptr));
+            die("line %d - unexpected token: %s", cur_token_ptr->line, get_tok_name(cur_token_ptr));
         }
         
         
@@ -939,7 +939,7 @@ struct Token* peek_token(int offset) {
 
 void eat_token(enum TokenType expected_type) {
     if (tok_arr_ptr->tokens[cur_token_index].tok_type != expected_type)  {
-        die("line: %d - expected token type: %d but got a token of type: %d\n", cur_token_ptr->line, expected_type, get_tok_type(cur_token_ptr));
+        die("line: %d - expected token type: %s but got a token of type: %s\n", cur_token_ptr->line, get_tok_name(cur_token_ptr), get_tok_name(cur_token_ptr));
     }
     next_token();
 }
@@ -1040,4 +1040,151 @@ void init_ast_allocators(Program* program_ptr) {
     init_main_statement_bucket(program_ptr);
     init_main_expression_bucket(program_ptr);
     init_main_struct_type_bucket(program_ptr);
+}
+
+/*-------------------------------------------------------------------------------*/
+
+char* get_tok_name(Token* tok) {
+    switch (get_tok_type(tok)) {
+        case TOK_INVALID: {
+            char* str = malloc(8* sizeof(char));
+            str[0] = 'i'; str[1] = 'n'; str[2] = 'v'; str[3] = 'a'; str[4] = 'l'; str[5] = 'i'; str[6] = 'd'; str[7] = '\0';
+            return str;
+        }
+        case TOK_IDENTIFIER: {
+            char* str = malloc(11* sizeof(char));
+            str[0] = 'i'; str[1] = 'd'; str[2] = 'e'; str[3] = 'n'; str[4] = 't'; str[5] = 'i'; str[6] = 'f'; str[7] = 'i'; str[8] = 'e'; str[9] = 'r'; str[10] = '\0';
+            return str;
+        }
+        case TOK_NUMBER: {
+            char* str = malloc(7* sizeof(char));
+            str[0] = 'n'; str[1] = 'u'; str[2] = 'm'; str[3] = 'b'; str[4] = 'e'; str[5] = 'r'; str[6] = '\0';
+            return str;
+        }
+        case TOK_BOOL: {
+            char* str = malloc(5* sizeof(char));
+            str[0] = 'b'; str[1] = 'o'; str[2] = 'o'; str[3] = 'l'; str[4] = '\0';
+            return str;
+        }
+        case TOK_STRING: {
+            char* str = malloc(7* sizeof(char));
+            str[0] = 's'; str[1] = 't'; str[2] = 'r'; str[3] = 'i'; str[4] = 'n'; str[5] = 'g'; str[6] = '\0';
+            return str;
+        }
+        case TOK_CHAR: {
+            char* str = malloc(5* sizeof(char));
+            str[0] = 'c'; str[1] = 'h'; str[2] = 'a'; str[3] = 'r'; str[4] = '\0';
+            return str;
+        }
+        case TOK_COMMA: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ','; str[1] = '\0';
+            return str;
+        }
+        case TOK_DOT: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '.'; str[1] = '\0';
+            return str;
+        }
+        case TOK_SEMI_COLON: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ';'; str[1] = '\0';
+            return str;
+        }
+        case TOK_COLON: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ':'; str[1] = '\0';
+            return str;
+        }
+        case TOK_PLUS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '+'; str[1] = '\0';
+            return str;
+        }
+        case TOK_MINUS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '-'; str[1] = '\0';
+            return str;
+        }
+        case TOK_ASTERISK: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '*'; str[1] = '\0';
+            return str;
+        }
+        case TOK_SLASH: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '/'; str[1] = '\0';
+            return str;
+        }
+        case TOK_DOLLAR_SIGN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '$'; str[1] = '\0';
+            return str;
+        }
+        case TOK_AT_SIGN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '@'; str[1] = '\0';
+            return str;
+        }
+        case TOK_EQUALS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '='; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_PAREN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '('; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_PAREN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ')'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_CURLY: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '{'; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_CURLY: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '}'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_SQUARE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '['; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_SQUARE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ']'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_ANGLE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '<'; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_ANGLE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '>'; str[1] = '\0';
+            return str;
+        }
+        case TOK_AMPERSAND: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '&'; str[1] = '\0';
+            return str;
+        }
+        case TOK_PIPE: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '|'; str[1] = '\0';
+            return str;
+        }
+            
+        default:
+            break;
+    }
+    
+    return NULL;
 }
