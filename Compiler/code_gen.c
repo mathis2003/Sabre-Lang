@@ -429,37 +429,14 @@ void write_expression(struct Expression* expr, FILE* fp) {
         case EXPR_ASSIGN: {
             
             // should also include assigning function literals
-            if (is_value(expr->assignment.left)) {
-                
-                write_expression(expr->assignment.left, fp);
-            } else { // it's a variable
-                if (is_value(expr->assignment.assigned_expr)) {
-                    fprintf(fp, "*");
-                    if (expr->assignment.assigned_val_is_fn_literal) {
-                        // TODO: add the correct name if it is in a struct and accessed with dot operator
-                        
-                    }
-                    else {
-                        write_expression(expr->assignment.left, fp);
-                    }
-                } else {
-                    if (expr->assignment.assigned_val_is_fn_literal) {
-                        // TODO: add the correct name if it is in a struct and accessed with dot operator
-                        write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
-                    }
-                    else {
-                        write_expression(expr->assignment.left, fp);
-                    }
-                }
+            if (is_value(expr->assignment.left) == 0) {
+                // it's a variable to which a value is assigned
+                if (is_value(expr->assignment.assigned_expr)) fprintf(fp, "*");
             }
-                
-            //} else if (expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) {
-            //    char* name = str_to_c_str(&(expr->assignment.variable_name));
-            //    if (expr->assignment.right_hand_side_is_variable) fprintf(fp, "%s", name);
-            //    else fprintf(fp, "*%s", name);
-            
+            write_expression(expr->assignment.left, fp);
             
             fprintf(fp, " = ");
+            
             if (expr->assignment.assigned_val_is_fn_literal) {
                 // do some stuff with anonymous function pointer or something
                 write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
