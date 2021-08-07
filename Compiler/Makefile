@@ -7,6 +7,6 @@ run: output.c
 	./compiler sabre_examples.txt output.c
 	gcc output.c -o sabre_examples
 	./sabre_examples
-
+	
 clean:
 	rm compiler

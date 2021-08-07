@@ -9,9 +9,10 @@ typedef enum ExpressionType {
     EXPR_ADD, EXPR_SUB, EXPR_MULT, EXPR_DIV, EXPR_IF_THEN_ELSE, EXPR_FN_CALL,
     EXPR_LOGIC_AND, EXPR_LOGIC_OR,
     EXPR_COND_EQUALS, EXPR_COND_GREATER_EQUALS, EXPR_COND_LOWER_EQUALS, EXPR_COND_GREATER, EXPR_COND_LOWER,
-    EXPR_VAR_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL, EXPR_STR_LITERAL,
+    EXPR_IDENT_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL, EXPR_STR_LITERAL,
     EXPR_ASSIGN,
-    EXPR_VALUE_OF
+    EXPR_VALUE_OF,
+    EXPR_MEMBER_ACCESS
     
 } ExpressionType;
 
@@ -95,22 +96,16 @@ typedef struct BinOp {
     struct Expression* right;
 } BinOp;
 
-typedef enum LeftHandSideType {
-    LEFT_HAND_VARIABLE, LEFT_HAND_VALUE, LEFT_HAND_RET
-} LeftHandSideType;
+
 
 typedef struct Assignment {
-    enum LeftHandSideType left_hand_side_enum;
-    union {
-        struct StringStruct variable_name;
-        struct ScopeObject  scope_object;
-    };
+    struct Expression* left;
     
-    unsigned int right_hand_side_is_variable : 1;
-    unsigned int assigned_val_is_fn : 1;
+    unsigned int arrow_operator : 1; // else is equals assign
+    unsigned int assigned_val_is_fn_literal : 1;
     union {
-        struct StringStruct assigned_variable; // this member is not needed in parser but in code_gen
-        struct Expression*  assigned_value;
+        struct StringStruct assigned_identifier; // this member is not needed in parser but in code_gen
+        struct Expression*  assigned_expr;
         struct FnLiteral*   assigned_fn_literal;
     };
     
@@ -128,8 +123,8 @@ typedef struct Expression {
         long int            int_literal;
         char                char_literal;
         struct StringStruct string_literal;
-        struct StringStruct variable_literal;
-        struct FnLiteral*   fn_ptr_literal;
+        struct StringStruct identifier_literal;
+        //struct FnLiteral*   fn_ptr_literal;
         struct BinOp        bin_op;
         struct TernOp       tern_op;
         struct FnCall       fn_call;
@@ -173,17 +168,17 @@ typedef struct Declaration {
     struct DataType type;
     
     unsigned int is_initialized : 1;
-    unsigned int variable_assigned : 1;
+    //unsigned int variable_assigned : 1;
     union {
         //...
-        long int            init_int_val;
-        char                init_char_val;
-        struct StringStruct init_string;
+        //long int            init_int_val;
+        //char                init_char_val;
+        //struct StringStruct init_string;
         
         //...
         struct FnLiteral*   init_fn_ptr;
         struct Expression*  init_expr;
-        struct StringStruct init_variable;
+        //struct StringStruct init_variable;
     };
     
 } Declaration;
@@ -300,7 +295,7 @@ struct FunctionType* parse_function_type();
 struct FunctionType* parse_fn_literal_to_function_type(struct FnLiteral* fn_literal);
 
 struct Expression* parse_expression();
-struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, char store_in_operator);
+struct Expression* parse_assignment(Expression* left_expr);
 struct Expression* parse_if_else_expr();
 struct Expression* parse_logic_expr();
 struct Expression* parse_bool_term();

@@ -313,27 +313,30 @@ void print_expression(Expression* expr, int tree_level) {
         case EXPR_ASSIGN: {
             PRINT_NODE("type: assignment\n", tree_level+1);
             PRINT_NODE("left variable:\n", tree_level+1);
-            if ((expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) ||(expr->assignment.left_hand_side_enum == LEFT_HAND_VALUE)) {
-                PRINT_NODE("", tree_level+2);
-                print_str_struct(&(expr->assignment.variable_name));
+            print_expression(expr->assignment.left, tree_level+2);
+            
+            if (expr->assignment.arrow_operator) {
+                PRINT_NODE("operator: \'->\'\n", tree_level+1);
+            } else {
+                PRINT_NODE("operator: \'=\'\n", tree_level+1);
+            }
+            
+            PRINT_NODE("assigned:\n", tree_level+1);
+            if (expr->assignment.assigned_val_is_fn_literal) {
+                print_fn_literal(expr->assignment.assigned_fn_literal, tree_level+2);
                 printf("\n");
             } else {
-                // left hand side is scope
+                print_expression(expr->assignment.assigned_expr, tree_level+2);
                 printf("\n");
-                PRINT_NODE("scope:\n", tree_level+2);
-                PRINT_NODE("index:\n", tree_level + 3);
-                PRINT_NODE("", tree_level + 4);
-                printf("%d\n", expr->assignment.scope_object.index);
             }
-            PRINT_NODE("assigned:\n", tree_level+1);
-            print_expression(expr->assignment.assigned_value, tree_level+1);
+            
             break;
         }
         
-        case EXPR_VAR_LITERAL: {
+        case EXPR_IDENT_LITERAL: {
             PRINT_NODE("type: variable value\n", tree_level+1);
             PRINT_NODE("variable: ", tree_level+1);
-            print_str_struct(&(expr->variable_literal));
+            print_str_struct(&(expr->identifier_literal));
             printf("\n");
             break;
         }
@@ -423,21 +426,9 @@ void print_data_type(struct DataType* data_type_ptr, int tree_level) {
 
 void print_init_val(struct Declaration* decl_ptr, int tree_level) {
     PRINT_NODE("init val:\n", tree_level);
-    
-    if (decl_ptr->type.is_value) {
-        if (decl_ptr->type.is_fn_ptr) {
-            print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
-        } else print_expression(decl_ptr->init_expr, tree_level);
-    } else {
-        if (decl_ptr->variable_assigned) {
-            PRINT_NODE("", tree_level+1);
-            print_str_struct(&(decl_ptr->init_variable));
-        } else {
-            if (decl_ptr->type.is_fn_ptr) {
-                print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
-            } else print_expression(decl_ptr->init_expr, tree_level);
-        }
-    }
+    if (decl_ptr->type.is_fn_ptr) {
+        print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
+    } else print_expression(decl_ptr->init_expr, tree_level);
 }
 
 void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {

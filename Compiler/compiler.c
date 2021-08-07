@@ -39,7 +39,6 @@ int main(int argc, char** argv) {
     struct Program* program_node_ptr = parse_tokens(tok_arr);
     
     //print_parse_tree(program_node_ptr);
-
     
     //free_tokens(tok_arr);
     /*---------------------------------------------------------------------------------------*/

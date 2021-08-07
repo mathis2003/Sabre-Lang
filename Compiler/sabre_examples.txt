@@ -1,3 +1,77 @@
+|""
+import {
+	* "ptlib.h"
+	* <stdlib.h>
+	* <stdio.h>
+	* <time.h>
+}
+
+[delay = (number_of_seconds : $u32) -> [delay_return: $u8] {
+	[millisecs : $u32]
+	[start_time : clock_t]
+	start_time = clock();
+    millisecs = (number_of_seconds * 1000);
+	delay_return = nested_loop(start_time, millisecs);
+
+	[nested_loop = (start_time : clock_t, milli_seconds : $u32) -> [nested_return : $u8]{
+		nested_return = (if (clock() < (start_time) + (milli_seconds)) then this(start_time, milli_seconds) else 0);
+	}]
+
+}]
+
+----INITIALIZE SCREEN----
+[screen1 : $ptlRaster]
+[x : $u8 = 5]
+[y : $u8 = 5]
+[prev_x : u8 <- 5]
+[prev_y : u8 <- 5]
+screen1 = ptlInitRaster(25, 20, 46);
+
+----RENDER SCREEN----
+
+game_loop();
+
+[game_loop = () -> [return_val : u8] {
+
+	ptlDrawPixel((screen1), 46, $prev_x, $prev_y);
+	ptlDrawPixel((screen1), 35, x, y);
+
+	prev_x <- (x);
+	prev_y <- (y);
+
+	delay(10);
+	ptlRepaint((screen1));
+
+	[keyPressed : $u32]
+    keyPressed = ptlPressedKey((screen1));
+	
+	x = (if (keyPressed == KEYCODE_LEFT_ARROW && x < 18 && x > 2) then (x - 1) 
+		else if (keyPressed == KEYCODE_RIGHT_ARROW && x < 18 && x > 2) then (x + 1)
+		else x);
+
+	y = (if (keyPressed == KEYCODE_UP_ARROW && y < 18 && y > 2) then (y - 1) 
+		else if (keyPressed == KEYCODE_DOWN_ARROW && y < 18 && x > 2) then (y + 1)
+		else y);
+
+	
+    if (keyPressed == KEYCODE_Q) then 1 else return_val = this();
+}]
+
+
+----DESTROY SCREEN----
+ptlDestroyRaster((screen1));
+    
+
+
+
+
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""|
+
+
+
+
 ---- IMPORTS ----
 
 import {
@@ -19,17 +93,17 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 [b : u32 <- 5]
 [c : u32 = b]
 
-[m : $MyStruct]
-m.b = 57;
-a = m.b;
-	printf("a: %d\n", a);
-	printf("m.b = %d\n", m.b);
+--[m : $MyStruct]
+--m.b = 57;
+--a = m.b;
+--printf("a: %d\n", a);
+--printf("m.b = %d\n", m.b);
 
-struct MyStruct :[
-	[a: u8]
-	[b : $u16 = 58]
+--struct MyStruct :[
+--	[a: u8]
+--	[b : $u16 = 58]
 	--[c: u8]
-]
+--]
 
 [factorial = (n : $u32) -> [x : $u32] {
 	x = if (n > 1) then n * this(n-1) else 1;

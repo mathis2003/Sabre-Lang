@@ -16,6 +16,57 @@ struct AssignDynArr    assign_dyn_arr;
 int struct_definition_from_entry_point = 1;
 
 struct VoidPtrArr struct_types;
+struct VoidPtrArr cur_param_decl_ptr_arr;
+struct VoidPtrArr cur_decl_ptr_arr;
+struct Declaration* function_return_declaration;
+
+signed int is_value(Expression* left_expr) {
+    // this function determines whether the expression is a value or a variable.
+    // it returns 1 if the expression is a value, 0 if it is a variable, and dies if the variable is not found
+    if (left_expr->expr_type == EXPR_IDENT_LITERAL) {
+        // look in parameters
+        for (int i = 0; i < cur_param_decl_ptr_arr.size; i++) {
+            Declaration* cur_decl = (Declaration*)(cur_param_decl_ptr_arr.void_ptrs[i]);
+            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
+                
+                // found the right declaration of the variable/value in question
+                if (cur_decl->type.is_value) { return 1; }
+                else { return 0; }
+            }
+        }
+            
+        // look in return declaration
+        if (function_return_declaration != NULL) {
+            if (str_equals_str(&(left_expr->identifier_literal), &(function_return_declaration->identifier))) {
+                // found the right declaration of the variable/value in question
+                if (function_return_declaration->type.is_value) return 1;
+                else return 0;
+            }
+        }
+        
+        
+        // look in declarations made in function body
+        for (int i = 0; i < cur_decl_ptr_arr.size; i++) {
+            Declaration* cur_decl = (Declaration*)(cur_decl_ptr_arr.void_ptrs[i]);
+            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
+                // found the right declaration of the variable/value in question
+                if (cur_decl->type.is_value) return 1;
+                else return 0;
+            }
+        }
+        
+    } else if (left_expr->expr_type == EXPR_MEMBER_ACCESS) {
+        // look at struct member's return type
+    } else if (left_expr->expr_type == EXPR_IF_THEN_ELSE) {
+        // look at first expressions return type
+    } else if (left_expr->expr_type == EXPR_FN_CALL) {
+        // look at return type
+    }
+    
+    // in case of any other expression (add, sub, logic or, ...) the returned thing is a value
+    return 1;
+    
+}
 
 void generate_code(struct Program* ast_root, char* file_name) {
     global_switch_pair.old_name = NULL;
@@ -34,6 +85,11 @@ void generate_code(struct Program* ast_root, char* file_name) {
 }
 
 void write_entry_point(struct EntryPoint* entry_point, FILE* fp) {
+    struct_types                     = entry_point->struct_type_ptr_arr;
+    cur_param_decl_ptr_arr.size      = 0;
+    cur_decl_ptr_arr                 = entry_point->decl_ptr_arr;
+    function_return_declaration      = NULL;
+    
     write_import_arr(&(entry_point->imports), fp);
     fprintf(fp, "\n#include <stdint.h>\n");
     
@@ -146,21 +202,21 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
             } else {
                 // make another assignment and add to array to write at the start of main()
                 struct Assignment assignment;
-                assignment.variable_name = decl->identifier;
-                assignment.left_hand_side_enum = LEFT_HAND_VARIABLE;
-                if (decl->variable_assigned) {
-                    assignment.right_hand_side_is_variable = 1;
-                    assignment.assigned_variable = decl->init_variable;
-                } else {
-                    fprintf(fp, " = &(");
-                    write_data_type(&(decl->type), fp);
-                    fprintf(fp, "){0}");
-                    assignment.right_hand_side_is_variable = 0;
-                    assignment.assigned_value = decl->init_expr;
+                {
+                    Expression* left_expr = malloc(sizeof(Expression));
+                    left_expr->expr_type = EXPR_IDENT_LITERAL;
+                    left_expr->identifier_literal = decl->identifier;
+                    assignment.left = left_expr;
                 }
+                
+                fprintf(fp, " = &(");
+                write_data_type(&(decl->type), fp);
+                fprintf(fp, "){0}");
+                assignment.assigned_expr = decl->init_expr;
+            
                 add_assignment_to_arr(&assign_dyn_arr, &assignment);
             }
-        } else {
+        } else {/*
             // the object of the type is not initialized, but perhaps it is a struct and the COMPILER should initialize it
             if (struct_types.void_ptrs != NULL) {
                 for (int i = 0; i < struct_types.size; i++) {
@@ -216,7 +272,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                     }
                     
                 }
-            }
+            }*/
         }
     }
     
@@ -352,8 +408,8 @@ void write_expression(struct Expression* expr, FILE* fp) {
             write_expression(expr->bin_op.right, fp);
             break;
         }
-        case EXPR_VAR_LITERAL: {
-            char* name = str_to_c_str(&(expr->variable_literal));
+        case EXPR_IDENT_LITERAL: {
+            char* name = str_to_c_str(&(expr->identifier_literal));
             if (global_switch_pair.old_name != NULL && !strcmp(global_switch_pair.old_name, name)) name = global_switch_pair.new_name;
             fprintf(fp, "%s", name);
             break;
@@ -373,22 +429,42 @@ void write_expression(struct Expression* expr, FILE* fp) {
         case EXPR_ASSIGN: {
             
             // should also include assigning function literals
-            if (expr->assignment.left_hand_side_enum == LEFT_HAND_VALUE) {
-                char* name = str_to_c_str(&(expr->assignment.variable_name));
-                fprintf(fp, "%s", name);
-            } else if (expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) {
-                char* name = str_to_c_str(&(expr->assignment.variable_name));
-                if (expr->assignment.right_hand_side_is_variable) fprintf(fp, "%s", name);
-                else fprintf(fp, "*%s", name);
-            } else {
-                fprintf(fp, "__ret");
+            if (is_value(expr->assignment.left)) {
+                
+                write_expression(expr->assignment.left, fp);
+            } else { // it's a variable
+                if (is_value(expr->assignment.assigned_expr)) {
+                    fprintf(fp, "*");
+                    if (expr->assignment.assigned_val_is_fn_literal) {
+                        // TODO: add the correct name if it is in a struct and accessed with dot operator
+                        
+                    }
+                    else {
+                        write_expression(expr->assignment.left, fp);
+                    }
+                } else {
+                    if (expr->assignment.assigned_val_is_fn_literal) {
+                        // TODO: add the correct name if it is in a struct and accessed with dot operator
+                        write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
+                    }
+                    else {
+                        write_expression(expr->assignment.left, fp);
+                    }
+                }
             }
+                
+            //} else if (expr->assignment.left_hand_side_enum == LEFT_HAND_VARIABLE) {
+            //    char* name = str_to_c_str(&(expr->assignment.variable_name));
+            //    if (expr->assignment.right_hand_side_is_variable) fprintf(fp, "%s", name);
+            //    else fprintf(fp, "*%s", name);
+            
             
             fprintf(fp, " = ");
-            if (expr->assignment.assigned_val_is_fn) {
+            if (expr->assignment.assigned_val_is_fn_literal) {
                 // do some stuff with anonymous function pointer or something
+                write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
             } else {
-                write_expression(expr->assignment.assigned_value, fp);
+                write_expression(expr->assignment.assigned_expr, fp);
             }
             break;
         }
@@ -409,23 +485,44 @@ void write_expression(struct Expression* expr, FILE* fp) {
 
 void write_assignment(struct Assignment* assignment, FILE* fp) {
     
-    if (assignment->left_hand_side_enum == LEFT_HAND_VARIABLE) {
-        if (assignment->right_hand_side_is_variable) {
-            fprintf(fp, "\t%s = ", str_to_c_str(&(assignment->variable_name)));
-            fprintf(fp, "%s", str_to_c_str(&(assignment->assigned_variable)));
+    if (is_value(assignment->left) == 0) {
+        if (is_value(assignment->assigned_expr) == 0) {
+            fprintf(fp, "\t");
+            write_expression(assignment->left, fp);
+            fprintf(fp, " = ");
+            // TODO: Should also work for function pointers
+            write_expression(assignment->assigned_expr, fp);
+            
         } else {
-            fprintf(fp, "\t*%s = ", str_to_c_str(&(assignment->variable_name)));
-            write_expression(assignment->assigned_value, fp);
+            fprintf(fp, "\t*");
+            write_expression(assignment->left, fp);
+            fprintf(fp, " = ");
+            // TODO: Should also work for function pointers
+            write_expression(assignment->assigned_expr, fp);
         }
     } else {
-        fprintf(fp, "\t%s = ", str_to_c_str(&(assignment->variable_name)));
-        write_expression(assignment->assigned_value, fp);
+        fprintf(fp, "\t");
+        write_expression(assignment->left, fp);
+        fprintf(fp, " = ");
+        // TODO: Should also work for function pointers
+        write_expression(assignment->assigned_expr, fp);
     }
     
     fprintf(fp, ";\n");
 }
 
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
+    struct VoidPtrArr old_struct_types = struct_types;
+    struct VoidPtrArr old_cur_param_decl_ptr_arr = cur_param_decl_ptr_arr;
+    struct VoidPtrArr old_cur_decl_ptr_arr = cur_decl_ptr_arr;
+    struct Declaration* old_function_return_declaration = function_return_declaration;
+    
+    struct_types                     = fn_ptr->struct_type_ptr_arr;
+    cur_param_decl_ptr_arr           = fn_ptr->param_decl_ptr_arr;
+    cur_decl_ptr_arr                 = fn_ptr->decl_ptr_arr;
+    function_return_declaration      = fn_ptr->return_variable;
+    
+    
     write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
     
     write_data_type(&(fn_ptr->return_variable->type), fp);
@@ -456,6 +553,12 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     fprintf(fp, "\n\treturn %s;\n", str_to_c_str(&(fn_ptr->return_variable->identifier)));
     
     fprintf(fp, "\n}\n");
+    
+    
+    struct_types = old_struct_types;
+    cur_param_decl_ptr_arr = old_cur_param_decl_ptr_arr;
+    cur_decl_ptr_arr = old_cur_decl_ptr_arr;
+    function_return_declaration = old_function_return_declaration;
 }
 
 /* ----------------------------------------------------------------------------- */

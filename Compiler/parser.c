@@ -315,29 +315,17 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             
             decl.is_initialized = 1;
             
-            if (decl.type.is_value) {
-                decl.variable_assigned = 0;
-                if (decl.type.is_fn_ptr) {
-                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-                } else {
-                    decl.init_expr = parse_expression();
-                }
-                
+            if (decl.type.is_fn_ptr) {
+                decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
             } else {
-                // it is a variable
-                decl.variable_assigned = 1;
-                if (cur_token_ptr->tok_type != TOK_IDENTIFIER) {
-                    die("line %d - expected an identifier as a variable name to be assigned to this variable\n", cur_token_ptr->line);
-                }
-                decl.init_variable = cur_token_ptr->name_str;
-                next_token(); // skip over name of assigned variable
+                decl.init_expr = parse_expression();
             }
+            
         } else if (cur_token_ptr->tok_type == TOK_OPEN_ANGLE_BRACKET && peek_token(1)->tok_type == TOK_MINUS) {
             next_token(); // skip over "<-" operator
             next_token(); // skip over "<-" operator
             
             decl.is_initialized = 1;
-            decl.variable_assigned = 0;
             
             if (decl.type.is_value) {
                 die("line %d - can't put a value inside a value, the operator should be '=' instead of '<-'\n", cur_token_ptr->line);
@@ -352,7 +340,6 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             
             
         } else {
-            decl.variable_assigned = 0;
             decl.is_initialized = 0;
             
         }
@@ -387,7 +374,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     break;
                 }
                 case TOK_IDENTIFIER: {
-                    decl.init_variable = cur_token_ptr->name_str;
+                    decl.init_expr = parse_expression();
                     break;
                 }
                 case TOK_INVALID: {
@@ -407,7 +394,6 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             next_token(); // skip over "<-" operator
             
             decl.is_initialized    = 1;
-            decl.variable_assigned = 0;
             decl.type.is_value     = 1;
             
             switch (get_tok_type(cur_token_ptr)) {
@@ -435,6 +421,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 }
                     
                 default: {
+                    decl.type.is_fn_ptr = 0;
                     decl.init_expr = parse_expression();
                     break;
                     
@@ -511,7 +498,6 @@ void parse_imports(struct ImportList* import_list_ptr) {
             next_token(); // skips over imported file's name
             next_token(); // skips over imported file's name
             next_token(); // skips over imported file's name
-            printf("cur_tok: %d\n", get_tok_type(cur_token_ptr));
             eat_token(TOK_CLOSE_ANGLE_BRACKET);
             //import_list_ptr->namespaces[i]     = {};
         } else {
@@ -633,62 +619,47 @@ struct Expression* parse_expression() {
             // parse anonymous function call expression
             ;
         }  else {
-            if ((peek_token(1)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
-            else if ((get_tok_type(peek_token(1)) == TOK_EQUALS && get_tok_type(peek_token(2)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
-            else if ((peek_token(3)->tok_type == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(4)) == TOK_MINUS)) expr_ptr = parse_assignment(LEFT_HAND_VARIABLE, 1);
-            else if ((get_tok_type(peek_token(3)) == TOK_EQUALS && get_tok_type(peek_token(4)) != TOK_EQUALS)) expr_ptr = parse_assignment(LEFT_HAND_VALUE, 0);
-            else expr_ptr = parse_logic_expr();
+            expr_ptr = parse_logic_expr();
         }
     }
     
     return expr_ptr;
 }
 
-struct Expression* parse_assignment(enum LeftHandSideType left_hand_side_type, char store_in_operator) {
+struct Expression* parse_assignment(Expression* left_expr) {
     Expression assign_expr;
     assign_expr.expr_type = EXPR_ASSIGN;
-    assign_expr.assignment.assigned_val_is_fn = 0;
+    assign_expr.assignment.left = left_expr;
+    
 
-    assign_expr.assignment.left_hand_side_enum = left_hand_side_type;
-    assign_expr.assignment.variable_name = cur_token_ptr->name_str;
-    next_token(); // skip over identifier
-    if (get_tok_type(cur_token_ptr) == TOK_DOT && get_tok_type(peek_token(1)) == TOK_IDENTIFIER) {
-        assign_expr.assignment.variable_name = str_struct_cat_with_dot(&(assign_expr.assignment.variable_name), &(peek_token(1)->name_str));
-        next_token(); // skip over dot
-        next_token(); // skip over second identifier
-        //print_str_struct()
-    } else if (get_tok_type(cur_token_ptr) == TOK_MINUS && get_tok_type(peek_token(1)) == TOK_CLOSE_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_IDENTIFIER) {
-        // concatenate string with arrow
-        assign_expr.assignment.variable_name = str_struct_cat_with_arrow(&(assign_expr.assignment.variable_name), &(peek_token(2)->name_str));
-        next_token(); // skip over minus
-        next_token(); // skip over closing angle bracket
-        next_token(); // skip over second identifier
-        //print_str_struct()
-    }
-
-    if (store_in_operator) {
+    if (get_tok_type(cur_token_ptr) == TOK_OPEN_ANGLE_BRACKET) { // we now the token after is a minus because we already checked in parse_factor()
         next_token(); // skip over store-in operator
         next_token(); // skip over store-in operator
-
+        assign_expr.assignment.arrow_operator = 1;
+        
         if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
             (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
-            assign_expr.assignment.right_hand_side_is_variable = 1;
-            assign_expr.assignment.assigned_val_is_fn = 1;
+            // right hand side is a function literal
+            assign_expr.assignment.assigned_val_is_fn_literal = 1;
             assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
         } else {
-            assign_expr.assignment.right_hand_side_is_variable = 0;
-            assign_expr.assignment.assigned_value = parse_expression();
+            assign_expr.assignment.assigned_val_is_fn_literal = 0;
+            assign_expr.assignment.assigned_expr = parse_expression();
         }
-    } else {
+    } else { // this means there was an equals sign for the assignment
         next_token(); // skip over equals sign
+        assign_expr.assignment.arrow_operator = 0;
+        
         if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
             (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
-            assign_expr.assignment.assigned_val_is_fn = 1;
+            assign_expr.assignment.assigned_val_is_fn_literal = 1;
             assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
         } else {
-            assign_expr.assignment.assigned_value = parse_expression();
+            assign_expr.assignment.assigned_val_is_fn_literal = 0;
+            assign_expr.assignment.assigned_expr = parse_expression();
         }
     }
+    
     Expression* expr_ptr = add_expression_to_bucket(&assign_expr, ast_root_node->allocators.expression_bucket);
     return expr_ptr;
 }
@@ -865,20 +836,23 @@ struct Expression* parse_factor() {
     // basically, the options here are: an expression between parentheses, a function call, or a literal, or a value-of operator and identifier
     if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         struct Expression var_literal_expr;
-        var_literal_expr.expr_type = EXPR_VAR_LITERAL;
-        var_literal_expr.variable_literal = cur_token_ptr->name_str;
+        var_literal_expr.expr_type = EXPR_IDENT_LITERAL;
+        var_literal_expr.identifier_literal = cur_token_ptr->name_str;
         next_token();
+        
+        /* delete this once we're refactoring struct type parsing */
         if (get_tok_type(cur_token_ptr) == TOK_DOT && get_tok_type(peek_token(1)) == TOK_IDENTIFIER) {
-            var_literal_expr.variable_literal = str_struct_cat_with_dot(&(var_literal_expr.variable_literal), &(peek_token(1)->name_str));
+            var_literal_expr.identifier_literal = str_struct_cat_with_dot(&(var_literal_expr.identifier_literal), &(peek_token(1)->name_str));
             next_token(); // skip over dot
             next_token(); // skip over second identifier
         } else if (get_tok_type(cur_token_ptr) == TOK_MINUS && get_tok_type(peek_token(1)) == TOK_CLOSE_ANGLE_BRACKET && get_tok_type(peek_token(2)) == TOK_IDENTIFIER) {
-            var_literal_expr.variable_literal = str_struct_cat_with_arrow(&(var_literal_expr.variable_literal), &(peek_token(2)->name_str));
+            var_literal_expr.identifier_literal = str_struct_cat_with_arrow(&(var_literal_expr.identifier_literal), &(peek_token(2)->name_str));
             next_token(); // skip over minus
             next_token(); // skip over closing angle bracket
             next_token(); // skip over second identifier
             //print_str_struct()
         }
+        /* delete this once we're refactoring struct type parsing */
         
         ret_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
     }
@@ -907,9 +881,16 @@ struct Expression* parse_factor() {
     }
     
     // check if there's an open paren following up, in that case: function call
-    if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+    if (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN) {
         ret_expr = parse_fn_call_expr(ret_expr);
         
+    } // check if there's a dot following up, in that case: member access
+    /*else if (get_tok_type(cur_token_ptr) == TOK_DOT) {
+        // this needs to be implemented when refactoring struct type parsing
+    }*/ // check if there's a dot following up, in that case: member access
+    else if ((get_tok_type(cur_token_ptr) == TOK_EQUALS && get_tok_type(peek_token(1)) != TOK_EQUALS)||
+             (get_tok_type(cur_token_ptr) == TOK_OPEN_ANGLE_BRACKET && get_tok_type(peek_token(1)) == TOK_MINUS)) {
+        ret_expr = parse_assignment(ret_expr);
     }
     
     return ret_expr;
