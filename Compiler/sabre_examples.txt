@@ -31,13 +31,13 @@ screen1 = ptlInitRaster(25, 20, 46);
 
 game_loop();
 
-[game_loop = () -> [return_val : u8] {
+[game_loop = () -> [return_val : $u8] {
 
 	ptlDrawPixel((screen1), 46, $prev_x, $prev_y);
-	ptlDrawPixel((screen1), 35, x, y);
+	ptlDrawPixel(screen1, 35, x, y);
 
-	prev_x <- (x);
-	prev_y <- (y);
+	prev_x <- x;
+	prev_y <- y;
 
 	delay(10);
 	ptlRepaint((screen1));
@@ -54,7 +54,7 @@ game_loop();
 		else y);
 
 	
-    if (keyPressed == KEYCODE_Q) then 1 else return_val = this();
+    return_val = if (keyPressed == KEYCODE_Q) then 1 else this();
 }]
 
 
@@ -93,17 +93,17 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 [b : u32 <- 5]
 [c : u32 = b]
 
---[m : $MyStruct]
---m.b = 57;
---a = m.b;
---printf("a: %d\n", a);
---printf("m.b = %d\n", m.b);
+[m : $MyStruct]
+(m.b) = 57;
+a = m.b;
+printf("a: %d\n", a);
+printf("m.b = %d\n", m.b + 4);
 
---struct MyStruct :[
---	[a: u8]
---	[b : $u16 = 58]
-	--[c: u8]
---]
+struct MyStruct :[
+	[a: u8]
+	[b : $u16 = 58]
+	[c: u8]
+]
 
 [factorial = (n : $u32) -> [x : $u32] {
 	x = if (n > 1) then n * this(n-1) else 1;
@@ -128,8 +128,6 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 
 ----- DEMO OF NESTED FUNCTION -----
 printf("p: %d\n", p());
-
---(struc.member) <- 5;
 
 [p = () -> [x5 : $u8] {
 

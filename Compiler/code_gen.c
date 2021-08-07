@@ -315,42 +315,51 @@ void write_statement(struct Statement* stmt, FILE* fp) {
 }
 
 void write_expression(struct Expression* expr, FILE* fp) {
-    fprintf(fp, "(");
     switch (expr->expr_type) {
         case EXPR_ADD: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "+");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_SUB: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "-");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_MULT: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "*");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_DIV: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "/");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_IF_THEN_ELSE: {
+            fprintf(fp, "(");
             write_expression(expr->tern_op.left, fp);
             fprintf(fp, " ? ");
             write_expression(expr->tern_op.middle, fp);
             fprintf(fp, " : ");
             write_expression(expr->tern_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_FN_CALL: {
-            
+            fprintf(fp, "(");
             write_expression(expr->fn_call.fn_ptr_expr, fp);
             
             fprintf(fp, "(");
@@ -364,48 +373,63 @@ void write_expression(struct Expression* expr, FILE* fp) {
                 if (i < expr->fn_call.arg_ptr_arr.size-1) fprintf(fp, " , ");
             }
             fprintf(fp, ")");
+            fprintf(fp, ")");
             break;
         }
         case EXPR_LOGIC_AND: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "&&");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_LOGIC_OR: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "||");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_COND_EQUALS: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "==");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_COND_GREATER_EQUALS: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, ">=");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_COND_LOWER_EQUALS: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "<=");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_COND_GREATER: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, ">");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_COND_LOWER: {
+            fprintf(fp, "(");
             write_expression(expr->bin_op.left, fp);
             fprintf(fp, "<");
             write_expression(expr->bin_op.right, fp);
+            fprintf(fp, ")");
             break;
         }
         case EXPR_IDENT_LITERAL: {
@@ -427,7 +451,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
             break;
         }
         case EXPR_ASSIGN: {
-            
+            fprintf(fp, "(");
             // should also include assigning function literals
             if (is_value(expr->assignment.left) == 0) {
                 // it's a variable to which a value is assigned
@@ -443,10 +467,20 @@ void write_expression(struct Expression* expr, FILE* fp) {
             } else {
                 write_expression(expr->assignment.assigned_expr, fp);
             }
+            fprintf(fp, ")");
             break;
         }
         case EXPR_VALUE_OF: {
+            fprintf(fp, "(");
             fprintf(fp, "*%s", str_to_c_str(&(expr->val_of_op.variable_name)));
+            fprintf(fp, ")");
+            break;
+        }
+            
+        case EXPR_MEMBER_ACCESS: {
+            write_expression(expr->member_access_op.parent, fp);
+            fprintf(fp, ".");
+            write_expression(expr->member_access_op.member, fp);
             break;
         }
             
@@ -457,7 +491,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
         }
             
     }
-    fprintf(fp, ")");
+    //fprintf(fp, ")");
 }
 
 void write_assignment(struct Assignment* assignment, FILE* fp) {
