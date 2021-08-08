@@ -1,4 +1,3 @@
-
 import {
 	* "ptlib.h"
 	* <stdlib.h>
@@ -98,10 +97,14 @@ printf("exponent (%d, %d): %d\n", 2, 4, exponent(2, 4, 0));
 [c : u32 = b]
 
 [m : $MyStruct]
+[m_var : MyStruct]
 (m.b) = 57;
-a = m.b;
+
+(m_var.b) = 38;
+(a = (m_var.b));
 printf("a: %d\n", a);
 printf("m.b = %d\n", m.b + 4);
+printf("m_var.b: %d\n", ($m_var).b);
 
 struct MyStruct :[
 	[a: u8]

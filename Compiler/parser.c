@@ -889,13 +889,27 @@ struct Expression* parse_member_access_op(Expression* parent) {
         Expression parent_expr;
         Expression* right_expr;
         
-        parent_expr.expr_type = EXPR_MEMBER_ACCESS;
-        next_token();
+        next_token(); // skip over dot token
         
-        right_expr = parse_factor();
+        {
+            if (get_tok_type(cur_token_ptr) == TOK_IDENTIFIER) {
+                struct Expression var_literal_expr;
+                var_literal_expr.expr_type = EXPR_IDENT_LITERAL;
+                var_literal_expr.identifier_literal = cur_token_ptr->name_str;
+                next_token(); // skip over identifier
+            
+                right_expr = add_expression_to_bucket(&var_literal_expr, ast_root_node->allocators.expression_bucket);
+            } else {
+                die("expected an identifier after the dot token for accessing a member of a struct but got token: %s\n", get_tok_name(cur_token_ptr));
+            }
+            
+        }
         
-        parent_expr.member_access_op.parent = left_expr;
-        parent_expr.member_access_op.member = right_expr;
+        {
+            parent_expr.expr_type = EXPR_MEMBER_ACCESS;
+            parent_expr.member_access_op.parent = left_expr;
+            parent_expr.member_access_op.member = right_expr;
+        }
         
         left_expr = add_expression_to_bucket(&parent_expr, ast_root_node->allocators.expression_bucket);
     }

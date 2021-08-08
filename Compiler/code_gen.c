@@ -20,6 +20,15 @@ struct VoidPtrArr cur_param_decl_ptr_arr;
 struct VoidPtrArr cur_decl_ptr_arr;
 struct Declaration* function_return_declaration;
 
+signed int is_primitive_type(struct StringStruct* str) {
+    if (str_equals_literal(str, "Unit")) return 1;
+    else if (str_equals_literal(str, "u8")) return 1;
+    else if (str_equals_literal(str, "u16")) return 1;
+    else if (str_equals_literal(str, "u32")) return 1;
+    
+    return 0;
+}
+
 signed int is_value(Expression* left_expr) {
     // this function determines whether the expression is a value or a variable.
     // it returns 1 if the expression is a value, 0 if it is a variable, and dies if the variable is not found
@@ -29,10 +38,8 @@ signed int is_value(Expression* left_expr) {
             Declaration* cur_decl = (Declaration*)(cur_param_decl_ptr_arr.void_ptrs[i]);
             if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
                 // found the right declaration of the variable/value in question
-                if (cur_decl->type.is_value) {
-                    return 1;
-                }
-                else { return 0; }
+                if (cur_decl->type.is_value) return 1;
+                else return 0;
             }
         }
             
@@ -136,7 +143,6 @@ void write_struct_definition(struct StructType* struct_type, FILE* fp) {
         fprintf(fp, "\t");
         if (decl->type.is_fn_ptr) {
             write_data_type(&(decl->type.fn_type->return_type), fp);
-            if (decl->type.is_value == 0) fprintf(fp, "*");
             fprintf(fp, "(*%s)", str_to_c_str(&(decl->identifier)));
             fprintf(fp, "(");
             for (int i = 0; i < decl->type.fn_type->amount_of_fn_parameters; i++) {
@@ -147,7 +153,6 @@ void write_struct_definition(struct StructType* struct_type, FILE* fp) {
             
         } else {
             write_data_type(&(decl->type), fp);
-            if (decl->type.is_value == 0) fprintf(fp, "*");
             fprintf(fp, "%s", str_to_c_str(&(decl->identifier)));
         }
         
@@ -193,7 +198,6 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
         }
     } else {
         write_data_type(&(decl->type), fp);
-        //if (decl->type.is_value == 0) fprintf(fp, "*");
         fprintf(fp, "%s", str_to_c_str(&(decl->identifier)));
         
         if (decl->is_initialized) {
@@ -237,7 +241,6 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                     }
                 }
                 
-                //write_data_type(&(decl->type), fp);
                 fprintf(fp, "){0}");
                 
                 if (is_value(decl->init_expr) == 1) assignment.arrow_operator = 1;
@@ -247,63 +250,12 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
             
                 add_assignment_to_arr(&assign_dyn_arr, &assignment);
             }
-        } else {/*
-            // the object of the type is not initialized, but perhaps it is a struct and the COMPILER should initialize it
-            if (struct_types.void_ptrs != NULL) {
-                for (int i = 0; i < struct_types.size; i++) {
-                    
-                    struct StructType* cur_struct_type = (struct StructType*)(struct_types.void_ptrs[i]);
-                    if (str_equals_str(&(decl->type.type_name), &(cur_struct_type->struct_name))) {
-                        // found a struct that should really be initialized
-                        fprintf(fp, ";\n");
-                        
-                        if (struct_definition_from_entry_point) {
-                            
-                            // create assignments and add to the dynamic array
-                            // make another assignment and add to array to write at the start of main()
-                            for (int j = 0; j < cur_struct_type->amount_of_decls; j++) {
-                                struct Declaration* decl = (struct Declaration*)((cur_struct_type->decl_ptr_arr)[i]);
-                                struct StringStruct var_name = str_struct_cat_with_dot(&(cur_struct_type->struct_name), &(decl->identifier));
-                                if (decl->is_initialized) {
-                                    
-                                    struct Assignment assignment;
-                                    assignment.variable_name = var_name;
-                                    assignment.left_hand_side_enum = LEFT_HAND_VARIABLE;
-                                    assignment.right_hand_side_is_variable = 0;
-                                    if (decl->type.is_fn_ptr) {
-                                        assignment.assigned_val_is_fn = 1;
-                                        assignment.assigned_fn_literal = decl->init_fn_ptr;
-                                    } else {
-                                        assignment.assigned_val_is_fn = 0;
-                                        assignment.assigned_value = decl->init_expr;
-                                    }
-                                    
-                                    add_assignment_to_arr(&assign_dyn_arr, &assignment);
-                                }
-                            }
-                            
-                        } else {
-                            // write the assignments immediately
-                            for (int j = 0; j < cur_struct_type->amount_of_decls; j++) {
-                                struct Declaration* decl = (struct Declaration*)((cur_struct_type->decl_ptr_arr)[i]);
-                                struct StringStruct var_name = str_struct_cat_with_dot(&(cur_struct_type->struct_name), &(decl->identifier));
-                                if (decl->is_initialized) {
-                                    fprintf(fp, "%s = ", str_to_c_str(&(var_name)));
-                                    if (decl->type.is_fn_ptr) {
-                                        anon_fn_name = generate_anon_fn_name();
-                                        write_fn_literal(anon_fn_name, decl->init_fn_ptr, fp);
-                                    } else {
-                                        write_expression(decl->init_expr, fp);
-                                    }
-                                }
-                            }
-                        }
-                        
-                        break;
-                    }
-                    
-                }
-            }*/
+        } else {
+            if (is_primitive_type(&(decl->type.type_name)) == 0 && decl->type.is_value == 0) {
+                fprintf(fp, " = &(");
+                fprintf(fp, "%s", str_to_c_str(&(decl->type.type_name)));
+                fprintf(fp, "){0}");
+            }
         }
     }
     
@@ -515,7 +467,12 @@ void write_expression(struct Expression* expr, FILE* fp) {
             
         case EXPR_MEMBER_ACCESS: {
             write_expression(expr->member_access_op.parent, fp);
-            fprintf(fp, ".");
+            if (is_value(expr->member_access_op.parent)) {
+                fprintf(fp, ".");
+            } else {
+                fprintf(fp, "->");
+            }
+            
             write_expression(expr->member_access_op.member, fp);
             break;
         }
