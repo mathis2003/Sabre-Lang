@@ -1,4 +1,4 @@
-|""
+
 import {
 	* "ptlib.h"
 	* <stdlib.h>
@@ -8,18 +8,24 @@ import {
 
 [delay = (number_of_seconds : $u32) -> [delay_return: $u8] {
 	[millisecs : $u32]
-	[start_time : clock_t]
+	[start_time : $clock_t]
 	start_time = clock();
     millisecs = (number_of_seconds * 1000);
 	delay_return = nested_loop(start_time, millisecs);
 
-	[nested_loop = (start_time : clock_t, milli_seconds : $u32) -> [nested_return : $u8]{
+	[nested_loop = (start_time : $clock_t, milli_seconds : $u32) -> [nested_return : $u8]{
 		nested_return = (if (clock() < (start_time) + (milli_seconds)) then this(start_time, milli_seconds) else 0);
 	}]
 
 }]
 
-----INITIALIZE SCREEN----
+
+
+
+----RENDER SCREEN----
+
+
+
 [screen1 : $ptlRaster]
 [x : $u8 = 5]
 [y : $u8 = 5]
@@ -27,11 +33,9 @@ import {
 [prev_y : u8 <- 5]
 screen1 = ptlInitRaster(25, 20, 46);
 
-----RENDER SCREEN----
+game_loop(screen1, x, y, prev_x, prev_y);
 
-game_loop();
-
-[game_loop = () -> [return_val : $u8] {
+[game_loop = (screen1 : $ptlRaster, x : $u8, y : $u8, prev_x : u8, prev_y : u8) -> [return_val : $u8] {
 
 	ptlDrawPixel((screen1), 46, $prev_x, $prev_y);
 	ptlDrawPixel(screen1, 35, x, y);
@@ -45,16 +49,16 @@ game_loop();
 	[keyPressed : $u32]
     keyPressed = ptlPressedKey((screen1));
 	
-	x = (if (keyPressed == KEYCODE_LEFT_ARROW && x < 18 && x > 2) then (x - 1) 
-		else if (keyPressed == KEYCODE_RIGHT_ARROW && x < 18 && x > 2) then (x + 1)
+	x = (if (keyPressed == KEYCODE_LEFT_ARROW && x > 0) then (x - 1) 
+		else if (keyPressed == KEYCODE_RIGHT_ARROW && x < 24) then (x + 1)
 		else x);
 
-	y = (if (keyPressed == KEYCODE_UP_ARROW && y < 18 && y > 2) then (y - 1) 
-		else if (keyPressed == KEYCODE_DOWN_ARROW && y < 18 && x > 2) then (y + 1)
+	y = (if (keyPressed == KEYCODE_UP_ARROW && y > 0) then (y - 1) 
+		else if (keyPressed == KEYCODE_DOWN_ARROW && y < 19) then (y + 1)
 		else y);
 
 	
-    return_val = if (keyPressed == KEYCODE_Q) then 1 else this();
+    return_val = if (keyPressed == KEYCODE_Q) then 1 else this(screen1, x, y, (prev_x), (prev_y));
 }]
 
 
@@ -67,7 +71,7 @@ ptlDestroyRaster((screen1));
 
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""|
+|"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
 

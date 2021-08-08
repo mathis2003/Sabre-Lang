@@ -28,9 +28,10 @@ signed int is_value(Expression* left_expr) {
         for (int i = 0; i < cur_param_decl_ptr_arr.size; i++) {
             Declaration* cur_decl = (Declaration*)(cur_param_decl_ptr_arr.void_ptrs[i]);
             if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
-                
                 // found the right declaration of the variable/value in question
-                if (cur_decl->type.is_value) { return 1; }
+                if (cur_decl->type.is_value) {
+                    return 1;
+                }
                 else { return 0; }
             }
         }
@@ -177,7 +178,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
         }
         
         write_data_type(&(decl->type.fn_type->return_type), fp);
-        if (decl->type.is_value == 0) fprintf(fp, "*");
+        //if (decl->type.is_value == 0) fprintf(fp, "*");
         fprintf(fp, "(*%s)", str_to_c_str(&(decl->identifier)));
         fprintf(fp, "(");
         for (int i = 0; i < decl->type.fn_type->amount_of_fn_parameters; i++) {
@@ -192,7 +193,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
         }
     } else {
         write_data_type(&(decl->type), fp);
-        if (decl->type.is_value == 0) fprintf(fp, "*");
+        //if (decl->type.is_value == 0) fprintf(fp, "*");
         fprintf(fp, "%s", str_to_c_str(&(decl->identifier)));
         
         if (decl->is_initialized) {
@@ -210,8 +211,38 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
                 }
                 
                 fprintf(fp, " = &(");
-                write_data_type(&(decl->type), fp);
+                
+                {
+                    if (decl->type.is_fn_ptr) {
+                        write_data_type(&(decl->type.fn_type->return_type), fp);
+                        fprintf(fp, " (*) ");
+                        fprintf(fp, "(");
+                        for (int i = 0; i < decl->type.fn_type->amount_of_fn_parameters; i++) {
+                            write_data_type(&(decl->type.fn_type->parameter_types[i]), fp);
+                            if (i < decl->type.fn_type->amount_of_fn_parameters-1) fprintf(fp, " , ");
+                        }
+                        fprintf(fp, ")");
+                    } else {
+                        if (str_equals_literal(&(decl->type.type_name), "Unit")) {
+                            fprintf(fp, "void ");
+                        } else if (str_equals_literal(&(decl->type.type_name), "u8")) {
+                            fprintf(fp, "uint8_t ");
+                        } else if (str_equals_literal(&(decl->type.type_name), "u16")) {
+                            fprintf(fp, "uint16_t ");
+                        } else if (str_equals_literal(&(decl->type.type_name), "u32")) {
+                            fprintf(fp, "uint32_t ");
+                        } else {
+                            fprintf(fp, "%s ", str_to_c_str(&(decl->type.type_name)));
+                        }
+                    }
+                }
+                
+                //write_data_type(&(decl->type), fp);
                 fprintf(fp, "){0}");
+                
+                if (is_value(decl->init_expr) == 1) assignment.arrow_operator = 1;
+                else assignment.arrow_operator = 0;
+                
                 assignment.assigned_expr = decl->init_expr;
             
                 add_assignment_to_arr(&assign_dyn_arr, &assignment);
@@ -302,6 +333,8 @@ void write_data_type (DataType* data_type, FILE* fp) {
             fprintf(fp, "%s ", str_to_c_str(&(data_type->type_name)));
         }
     }
+    
+    if (data_type->is_value == 0) fprintf(fp, "*");
 }
 
 void write_statement(struct Statement* stmt, FILE* fp) {
@@ -453,10 +486,13 @@ void write_expression(struct Expression* expr, FILE* fp) {
         case EXPR_ASSIGN: {
             fprintf(fp, "(");
             // should also include assigning function literals
-            if (is_value(expr->assignment.left) == 0) {
+            if (expr->assignment.arrow_operator) {
+                fprintf(fp, "*");
+            } else if (is_value(expr->assignment.left) == 0) {
                 // it's a variable to which a value is assigned
                 if (is_value(expr->assignment.assigned_expr)) fprintf(fp, "*");
             }
+            
             write_expression(expr->assignment.left, fp);
             
             fprintf(fp, " = ");
@@ -496,26 +532,22 @@ void write_expression(struct Expression* expr, FILE* fp) {
 
 void write_assignment(struct Assignment* assignment, FILE* fp) {
     
-    if (is_value(assignment->left) == 0) {
-        if (is_value(assignment->assigned_expr) == 0) {
-            fprintf(fp, "\t");
-            write_expression(assignment->left, fp);
-            fprintf(fp, " = ");
-            // TODO: Should also work for function pointers
-            write_expression(assignment->assigned_expr, fp);
-            
-        } else {
-            fprintf(fp, "\t*");
-            write_expression(assignment->left, fp);
-            fprintf(fp, " = ");
-            // TODO: Should also work for function pointers
-            write_expression(assignment->assigned_expr, fp);
-        }
+    // should also include assigning function literals
+    if (assignment->arrow_operator) {
+        fprintf(fp, "*");
+    } else if (is_value(assignment->left) == 0) {
+        // it's a variable to which a value is assigned
+        if (is_value(assignment->assigned_expr)) fprintf(fp, "*");
+    }
+    
+    write_expression(assignment->left, fp);
+    
+    fprintf(fp, " = ");
+    
+    if (assignment->assigned_val_is_fn_literal) {
+        // do some stuff with anonymous function pointer or something
+        write_fn_literal(str_to_c_str(&(assignment->left->identifier_literal)), assignment->assigned_fn_literal, fp);
     } else {
-        fprintf(fp, "\t");
-        write_expression(assignment->left, fp);
-        fprintf(fp, " = ");
-        // TODO: Should also work for function pointers
         write_expression(assignment->assigned_expr, fp);
     }
     
@@ -542,6 +574,7 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     for (int i = 0; i < fn_ptr->param_decl_ptr_arr.size; i++) {
         write_data_type(&(((struct Declaration*)(fn_ptr->param_decl_ptr_arr.void_ptrs[i]))->type), fp);
         fprintf(fp, " %s", str_to_c_str(&(((struct Declaration*)(fn_ptr->param_decl_ptr_arr.void_ptrs[i]))->identifier)));
+        
         if (i < (fn_ptr->param_decl_ptr_arr.size)-1) fprintf(fp, " , ");
     }
     fprintf(fp, ")");

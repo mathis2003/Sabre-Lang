@@ -1,79 +1,62 @@
 
+#include "ptlib.h"
+
+#include <stdlib.h>
+
 #include <stdio.h>
 
+#include <time.h>
+
 #include <stdint.h>
-typedef struct MyStruct {
-	uint8_t *a;
-	uint16_t b;
-	uint8_t *c;
-} MyStruct;
-uint32_t a = 6;
-uint32_t *b = &(uint32_t ){0};
-uint32_t *c = &(uint32_t ){0};
-MyStruct m;
-uint32_t  anon0 (uint32_t  n) {
-	uint32_t  x;
-	(x = ((n>1) ? (n*(anon0((n-1)))) : 1));
+uint32_t millisecs;
+clock_t start_time;
+uint8_t  anon1 (clock_t  start_time , uint32_t  milli_seconds) {
+	uint8_t  nested_return;
+	(nested_return = (((clock())<(start_time+milli_seconds)) ? (anon1(start_time , milli_seconds)) : 0));
 
-	return x;
+	return nested_return;
 
 }
-uint32_t (*factorial)(uint32_t ) = &anon0;
-uint32_t  anon1 (uint32_t  n) {
-	uint32_t  result;
-	(result = ((n>1) ? ((anon1((n-1)))+(anon1((n-2)))) : ((n==1) ? 1 : 0)));
+uint8_t (*nested_loop)(clock_t  , uint32_t ) = &anon1;
+uint8_t  anon0 (uint32_t  number_of_seconds) {
+	uint8_t  delay_return;
+	(start_time = (clock()));
+	(millisecs = (number_of_seconds*1000));
+	(delay_return = (nested_loop(start_time , millisecs)));
 
-	return result;
-
-}
-uint32_t (*fibonacci)(uint32_t ) = &anon1;
-uint32_t  anon2 (uint32_t  f1 , uint32_t  f2 , uint32_t  n) {
-	uint32_t  x;
-	(x = ((n<f2) ? (f1+(anon2(f1 , f2 , (n+1)))) : 0));
-
-	return x;
+	return delay_return;
 
 }
-uint32_t (*mult)(uint32_t  , uint32_t  , uint32_t ) = &anon2;
-uint32_t  anon3 (uint32_t  base , uint32_t  e , uint32_t  n) {
-	uint32_t  x;
-	(x = ((n<e) ? (base*(anon3(base , e , (n+1)))) : 1));
+uint8_t (*delay)(uint32_t ) = &anon0;
+ptlRaster screen1;
+uint8_t x = 5;
+uint8_t y = 5;
+uint8_t *prev_x = &(uint8_t ){0};
+uint8_t *prev_y = &(uint8_t ){0};
+uint32_t keyPressed;
+uint8_t  anon2 (ptlRaster  screen1 , uint8_t  x , uint8_t  y , uint8_t * prev_x , uint8_t * prev_y) {
+	uint8_t  return_val;
+	(ptlDrawPixel(screen1 , 46 , (*prev_x) , (*prev_y)));
+	(ptlDrawPixel(screen1 , 35 , x , y));
+	(*prev_x = x);
+	(*prev_y = y);
+	(delay(10));
+	(ptlRepaint(screen1));
+	(keyPressed = (ptlPressedKey(screen1)));
+	(x = (((keyPressed==KEYCODE_LEFT_ARROW)&&(x>0)) ? (x-1) : (((keyPressed==KEYCODE_RIGHT_ARROW)&&(x<24)) ? (x+1) : x)));
+	(y = (((keyPressed==KEYCODE_UP_ARROW)&&(y>0)) ? (y-1) : (((keyPressed==KEYCODE_DOWN_ARROW)&&(y<19)) ? (y+1) : y)));
+	(return_val = ((keyPressed==KEYCODE_Q) ? 1 : (anon2(screen1 , x , y , prev_x , prev_y))));
 
-	return x;
+	return return_val;
 
 }
-uint32_t (*exponent)(uint32_t  , uint32_t  , uint32_t ) = &anon3;
-uint32_t  anon5 () {
-	uint32_t  x6;
-	(x6 = 5);
-
-	return x6;
-
-}
-uint32_t (*ch)() = &anon5;
-uint8_t  anon4 () {
-	uint8_t  x5;
-	(x5 = ((ch())+1));
-
-	return x5;
-
-}
-uint8_t (*p)() = &anon4;
+uint8_t (*game_loop)(ptlRaster  , uint8_t  , uint8_t  , uint8_t * , uint8_t *) = &anon2;
 int main() {
-	*b = 5;
-	c = b;
-	(*c = ((*c)+8));
-	(printf("a = %d | b = %d | c = %d\n" , a , (*b) , (*c)));
-	(printf("Hello, World!\n"));
-	(printf("factorial: %d\n" , (factorial(a))));
-	(printf("fibonacci: %d\n" , (fibonacci(a))));
-	(printf("mult (%d, %d): %d\n" , 4 , 5 , (mult(4 , 5 , 0))));
-	(printf("exponent (%d, %d): %d\n" , 2 , 4 , (exponent(2 , 4 , 0))));
-	(m.b = 57);
-	(a = m.b);
-	(printf("a: %d\n" , a));
-	(printf("m.b = %d\n" , (m.b+4)));
-	(printf("p: %d\n" , (p())));
+*prev_x = 5;
+*prev_y = 5;
+	(screen1 = (ptlInitRaster(25 , 20 , 46)));
+	(game_loop(screen1 , x , y , prev_x , prev_y));
+	(ptlDestroyRaster(screen1));
 
 	return 0;
 }
