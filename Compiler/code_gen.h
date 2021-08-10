@@ -1,7 +1,7 @@
 #ifndef CODE_GEN_H
 #define CODE_GEN_H
 
-void generate_code(struct Program* ast_root, char* file_name);
+void generate_code(struct Program* ast_root, char* file_name, char* header_file_name);
 void write_entry_point(struct EntryPoint* entry_point, FILE* fp);
 void write_import_arr(struct ImportList* import_list, FILE* fp);
 void write_struct_definitions(struct VoidPtrArr struct_type_ptr_arr, FILE* fp);

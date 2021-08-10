@@ -322,6 +322,8 @@ void print_expression(Expression* expr, int tree_level) {
             }
             
             PRINT_NODE("assigned:\n", tree_level+1);
+            print_expression(expr->assignment.assigned_expr, tree_level+2);
+            /*
             if (expr->assignment.assigned_val_is_fn_literal) {
                 print_fn_literal(expr->assignment.assigned_fn_literal, tree_level+2);
                 printf("\n");
@@ -329,6 +331,7 @@ void print_expression(Expression* expr, int tree_level) {
                 print_expression(expr->assignment.assigned_expr, tree_level+2);
                 printf("\n");
             }
+             */
             
             break;
         }
@@ -368,6 +371,13 @@ void print_expression(Expression* expr, int tree_level) {
             printf("\n");
             break;
         }
+        case EXPR_FN_LITERAL: {
+            PRINT_NODE("type: function literal\n", tree_level+1);
+            print_fn_literal(&(expr->fn_ptr_literal), tree_level+2);
+            break;
+        }
+            
+            
             
         default: {
             PRINT_NODE("", tree_level + 1);
@@ -435,9 +445,12 @@ void print_data_type(struct DataType* data_type_ptr, int tree_level) {
 
 void print_init_val(struct Declaration* decl_ptr, int tree_level) {
     PRINT_NODE("init val:\n", tree_level);
+    print_expression(decl_ptr->init_expr, tree_level);
+    /*
     if (decl_ptr->type.is_fn_ptr) {
         print_fn_literal(decl_ptr->init_fn_ptr, tree_level + 1);
     } else print_expression(decl_ptr->init_expr, tree_level);
+     */
 }
 
 void print_declarations(struct VoidPtrArr* decl_ptr_arr, int tree_level) {

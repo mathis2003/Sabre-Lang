@@ -102,11 +102,11 @@ typedef struct Assignment {
     struct Expression* left;
     
     unsigned int arrow_operator : 1; // else is equals assign
-    unsigned int assigned_val_is_fn_literal : 1;
+    //unsigned int assigned_val_is_fn_literal : 1;
     union {
         struct StringStruct assigned_identifier; // this member is not needed in parser but in code_gen
         struct Expression*  assigned_expr;
-        struct FnLiteral*   assigned_fn_literal;
+        //struct FnLiteral*   assigned_fn_literal;
     };
     
 } Assignment;
@@ -129,10 +129,10 @@ typedef struct Expression {
         char                  char_literal;
         struct StringStruct   string_literal;
         struct StringStruct   identifier_literal;
-        //struct FnLiteral*   fn_ptr_literal;
         struct BinOp          bin_op;
         struct TernOp         tern_op;
         struct FnCall         fn_call;
+        struct FnLiteral      fn_ptr_literal;
         struct Assignment     assignment;
         struct ValueOfOp      val_of_op;
         struct MemberAccessOP member_access_op;
@@ -173,19 +173,7 @@ typedef struct Declaration {
     struct DataType type;
     
     unsigned int is_initialized : 1;
-    //unsigned int variable_assigned : 1;
-    union {
-        //...
-        //long int            init_int_val;
-        //char                init_char_val;
-        //struct StringStruct init_string;
-        
-        //...
-        struct FnLiteral*   init_fn_ptr;
-        struct Expression*  init_expr;
-        //struct StringStruct init_variable;
-    };
-    
+    struct Expression*  init_expr;
 } Declaration;
 
 
@@ -287,7 +275,7 @@ struct Program* parse_tokens(struct TokenArr* tok_arr);
 
 void parse_program_node(Program* program_ptr);
 struct EntryPoint* parse_entry_point();
-struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope);
+struct Expression* parse_fn_literal(struct FnLiteral* surrounding_scope);
 struct StructType* parse_struct_type();
 struct Declaration* parse_parameter_declaration();
 struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope);

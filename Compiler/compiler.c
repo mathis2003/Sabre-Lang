@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     /*---------------------------------------------------------------------------------------*/
     /* CODE GEN                                                                              */
     /*---------------------------------------------------------------------------------------*/
-    generate_code(program_node_ptr, argv[2]);
+    generate_code(program_node_ptr, argv[2], argv[3]);
     
     print_generated_code(argv[2]);
     

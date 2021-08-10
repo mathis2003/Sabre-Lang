@@ -102,6 +102,7 @@ struct EntryPoint* parse_entry_point() {
             }
             case TOK_DOLLAR_SIGN:
             case TOK_NUMBER:
+            case TOK_OPEN_CURLY:
             case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(NULL);
                 add_void_ptr_to_arr(&(entrypoint->stmt_ptr_arr), (void*)stmt_ptr);
@@ -133,7 +134,7 @@ struct EntryPoint* parse_entry_point() {
     return entrypoint;
 }
 
-struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
+struct Expression* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     struct FnLiteral ret_fn_literal;
     /*Initialize ret_scope*/ {
         ret_fn_literal.parent_scope = surrounding_scope;
@@ -181,6 +182,7 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             case TOK_DOLLAR_SIGN:
             case TOK_EQUALS:
             case TOK_NUMBER:
+            case TOK_OPEN_CURLY:
             case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(surrounding_scope);
                 add_void_ptr_to_arr(&(ret_fn_literal.stmt_ptr_arr), (void*)stmt_ptr);
@@ -210,9 +212,15 @@ struct FnLiteral* parse_fn_literal(struct FnLiteral* surrounding_scope) {
     
     eat_token(TOK_CLOSE_CURLY);
     
-    struct FnLiteral* ret_fn_literal_ptr = add_fn_literal_to_bucket(&ret_fn_literal, ast_root_node->allocators.fn_literal_bucket);
+    //struct FnLiteral* ret_fn_literal_ptr = add_fn_literal_to_bucket(&ret_fn_literal, ast_root_node->allocators.fn_literal_bucket);
     
-    return ret_fn_literal_ptr;
+    struct Expression expr;
+    expr.expr_type = EXPR_FN_LITERAL;
+    expr.fn_ptr_literal = ret_fn_literal;
+    
+    struct Expression* ret_expr_ptr = add_expression_to_bucket(&expr, ast_root_node->allocators.expression_bucket);
+    
+    return ret_expr_ptr;
 }
 
 struct StructType* parse_struct_type() {
@@ -316,7 +324,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             decl.is_initialized = 1;
             
             if (decl.type.is_fn_ptr) {
-                decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                decl.init_expr = parse_fn_literal(surrounding_scope);
             } else {
                 decl.init_expr = parse_expression();
             }
@@ -332,7 +340,7 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
             }
             
             if (decl.type.is_fn_ptr) {
-                decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                decl.init_expr = parse_fn_literal(surrounding_scope);
             } else {
                 decl.init_expr = parse_expression();
             }
@@ -358,9 +366,9 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                     if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
                         decl.type.is_fn_ptr = 1;
                         decl.type.is_value = 1;
-                        decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
+                        decl.init_expr = parse_fn_literal(surrounding_scope);
                         
-                        decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                        decl.type.fn_type = parse_fn_literal_to_function_type(&(decl.init_expr->fn_ptr_literal));
                     } else {
                         decl.init_expr = parse_expression();
                     }
@@ -369,8 +377,8 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 case TOK_OPEN_CURLY: {
                     decl.type.is_fn_ptr = 1;
                     decl.type.is_value = 1;
-                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-                    decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    decl.init_expr = parse_fn_literal(surrounding_scope);
+                    decl.type.fn_type = parse_fn_literal_to_function_type(&(decl.init_expr->fn_ptr_literal));
                     break;
                 }
                 case TOK_IDENTIFIER: {
@@ -400,8 +408,8 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 case TOK_OPEN_PAREN: {
                     if (get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN || get_tok_type(peek_token(2)) == TOK_COLON) {
                         decl.type.is_fn_ptr = 1;
-                        decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-                        decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                        decl.init_expr = parse_fn_literal(surrounding_scope);
+                        decl.type.fn_type = parse_fn_literal_to_function_type(&(decl.init_expr->fn_ptr_literal));
                     } else {
                         decl.type.is_fn_ptr = 0;
                         decl.init_expr = parse_expression();
@@ -410,8 +418,8 @@ struct Declaration* parse_declaration(struct FnLiteral* surrounding_scope) {
                 }
                 case TOK_OPEN_CURLY: {
                     decl.type.is_fn_ptr = 1;
-                    decl.init_fn_ptr = parse_fn_literal(surrounding_scope);
-                    decl.type.fn_type = parse_fn_literal_to_function_type(decl.init_fn_ptr);
+                    decl.init_expr = parse_fn_literal(surrounding_scope);
+                    decl.type.fn_type = parse_fn_literal_to_function_type(&(decl.init_expr->fn_ptr_literal));
                     break;
                 }
                 case TOK_INVALID: {
@@ -444,7 +452,7 @@ struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
     Statement stmt;
     
     // parse here
-    if (cur_token_ptr->tok_type == TOK_NUMBER) {
+    if (get_tok_type(cur_token_ptr) == TOK_NUMBER) {
         stmt.stmt_type = STMT_EXPR;
         stmt.expr = parse_expression();
         eat_token(TOK_SEMI_COLON);
@@ -460,8 +468,13 @@ struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
             stmt.expr = parse_expression();
             eat_token(TOK_SEMI_COLON);
         }
-    } else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
+    } else if (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN) {
         stmt.stmt_type = STMT_EXPR;
+        stmt.expr = parse_expression();
+        eat_token(TOK_SEMI_COLON);
+    } else if (get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY) {
+        stmt.stmt_type = STMT_EXPR;
+        
         stmt.expr = parse_expression();
         eat_token(TOK_SEMI_COLON);
     } else if (cur_token_ptr->tok_type == TOK_EQUALS) {
@@ -608,9 +621,12 @@ struct Expression* parse_expression() {
     if (cur_token_ptr->tok_type == TOK_NUMBER     ||
         cur_token_ptr->tok_type == TOK_BOOL       ||
         cur_token_ptr->tok_type == TOK_OPEN_PAREN ||
+        cur_token_ptr->tok_type == TOK_OPEN_CURLY ||
         cur_token_ptr->tok_type == TOK_STRING     ||
         cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
+        
         expr_ptr = parse_logic_expr();
+        
     }
     else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
@@ -636,28 +652,36 @@ struct Expression* parse_assignment(Expression* left_expr) {
         next_token(); // skip over store-in operator
         next_token(); // skip over store-in operator
         assign_expr.assignment.arrow_operator = 1;
+        assign_expr.assignment.assigned_expr = parse_expression();
+        
+        /*
         
         if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON        ||
+             get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY)) {
             // right hand side is a function literal
-            assign_expr.assignment.assigned_val_is_fn_literal = 1;
-            assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
+            //assign_expr.assignment.assigned_val_is_fn_literal = 1;
+            assign_expr.assignment.assigned_expr = parse_fn_literal(NULL);
         } else {
-            assign_expr.assignment.assigned_val_is_fn_literal = 0;
+            //assign_expr.assignment.assigned_val_is_fn_literal = 0;
             assign_expr.assignment.assigned_expr = parse_expression();
-        }
+        }*/
     } else { // this means there was an equals sign for the assignment
         next_token(); // skip over equals sign
         assign_expr.assignment.arrow_operator = 0;
         
+        /*
         if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
-            assign_expr.assignment.assigned_val_is_fn_literal = 1;
-            assign_expr.assignment.assigned_fn_literal = parse_fn_literal(NULL);
+            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON        ||
+             get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY)) {
+            //assign_expr.assignment.assigned_val_is_fn_literal = 1;
+            assign_expr.assignment.assigned_expr = parse_fn_literal(NULL);
         } else {
-            assign_expr.assignment.assigned_val_is_fn_literal = 0;
+            //assign_expr.assignment.assigned_val_is_fn_literal = 0;
             assign_expr.assignment.assigned_expr = parse_expression();
         }
+         */
+        assign_expr.assignment.assigned_expr = parse_expression();
     }
     
     Expression* expr_ptr = add_expression_to_bucket(&assign_expr, ast_root_node->allocators.expression_bucket);
@@ -855,12 +879,21 @@ struct Expression* parse_factor() {
         string_literal_expr.string_literal = cur_token_ptr->name_str;
         ret_expr = add_expression_to_bucket(&string_literal_expr, ast_root_node->allocators.expression_bucket);
         next_token();
+    } else if (cur_token_ptr->tok_type == TOK_OPEN_CURLY) {
+        
+        ret_expr = parse_fn_literal(NULL);
     }
     else if (cur_token_ptr->tok_type == TOK_OPEN_PAREN) {
         // parse parenthesized expression
-        next_token();
-        ret_expr = parse_expression();
-        eat_token(TOK_CLOSE_PAREN);
+        if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
+            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON)) {
+            ret_expr = parse_fn_literal(NULL);
+        } else {
+            next_token();
+            ret_expr = parse_expression();
+            eat_token(TOK_CLOSE_PAREN);
+        }
+        
     }
     else if (cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
         ret_expr = parse_value_of_term();

@@ -15,6 +15,8 @@ struct SwitchNamesPair global_switch_pair;
 struct AssignDynArr    assign_dyn_arr;
 int struct_definition_from_entry_point = 1;
 
+FILE* header_file;
+
 struct VoidPtrArr struct_types;
 struct VoidPtrArr cur_param_decl_ptr_arr;
 struct VoidPtrArr cur_decl_ptr_arr;
@@ -76,7 +78,7 @@ signed int is_value(Expression* left_expr) {
     
 }
 
-void generate_code(struct Program* ast_root, char* file_name) {
+void generate_code(struct Program* ast_root, char* file_name, char* header_file_name) {
     global_switch_pair.old_name = NULL;
     global_switch_pair.new_name = NULL;
     struct_types.void_ptrs = NULL;
@@ -88,6 +90,14 @@ void generate_code(struct Program* ast_root, char* file_name) {
         printf("error: couldn't create/open file: %s", file_name);
         return;
     }
+    
+    fopen(header_file_name, "w");
+    if (fp == NULL) {
+        // NOOO PANICK!!!!!
+        printf("error: couldn't create/open file: %s", file_name);
+        return;
+    }
+    
     write_entry_point(ast_root->entry_point, fp);
     fclose(fp);
 }
@@ -113,7 +123,9 @@ void write_entry_point(struct EntryPoint* entry_point, FILE* fp) {
     for (int i = 0; i < assign_dyn_arr.size; i++) {
         write_assignment(&((assign_dyn_arr.assignments)[i]), fp);
     }
+    
     write_statements_arr(entry_point->stmt_ptr_arr, fp);
+    
     fprintf(fp, "\n\treturn 0;\n");
     fprintf(fp, "}");
 }
@@ -179,7 +191,7 @@ void write_declaration(struct Declaration* decl, FILE* fp) {
     if (decl->type.is_fn_ptr) {
         if (decl->is_initialized) {
             anon_fn_name = generate_anon_fn_name();
-            write_fn_literal(anon_fn_name, decl->init_fn_ptr, fp);
+            write_fn_literal(anon_fn_name, &(decl->init_expr->fn_ptr_literal), fp);
         }
         
         write_data_type(&(decl->type.fn_type->return_type), fp);
@@ -431,10 +443,6 @@ void write_expression(struct Expression* expr, FILE* fp) {
             fprintf(fp, "\"%s\"", str_to_c_str(&(expr->string_literal)));
             break;
         }
-        case EXPR_FN_LITERAL: {
-            // do some stuff with anonymous function pointer or something
-            break;
-        }
         case EXPR_ASSIGN: {
             fprintf(fp, "(");
             // should also include assigning function literals
@@ -449,12 +457,15 @@ void write_expression(struct Expression* expr, FILE* fp) {
             
             fprintf(fp, " = ");
             
+            write_expression(expr->assignment.assigned_expr, fp);
+            /*
             if (expr->assignment.assigned_val_is_fn_literal) {
                 // do some stuff with anonymous function pointer or something
                 write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
             } else {
                 write_expression(expr->assignment.assigned_expr, fp);
             }
+            */
             fprintf(fp, ")");
             break;
         }
@@ -474,6 +485,27 @@ void write_expression(struct Expression* expr, FILE* fp) {
             }
             
             write_expression(expr->member_access_op.member, fp);
+            break;
+        }
+            
+        case EXPR_FN_LITERAL: {
+            char* anon_fn_name = NULL;
+            anon_fn_name = generate_anon_fn_name();
+            // this has to be fixed, below wants to write a function definition of a C function, but it can't do that outside of the scope of whetever
+            // the statement is in, thus it must be forwardly declared or something like that.
+            // code that must be fixed:
+            //    ___
+            //    | |
+            //    | |
+            //    | |
+            //    | |
+            //  __| |__
+            //  \     /
+            //   \   /
+            //    \ /
+            //     V
+            //write_fn_literal(anon_fn_name, &(expr->fn_ptr_literal), header_file);
+            fprintf(fp, "%s", anon_fn_name);
             break;
         }
             
@@ -501,12 +533,15 @@ void write_assignment(struct Assignment* assignment, FILE* fp) {
     
     fprintf(fp, " = ");
     
+    write_expression(assignment->assigned_expr, fp);
+    /*
     if (assignment->assigned_val_is_fn_literal) {
         // do some stuff with anonymous function pointer or something
         write_fn_literal(str_to_c_str(&(assignment->left->identifier_literal)), assignment->assigned_fn_literal, fp);
     } else {
         write_expression(assignment->assigned_expr, fp);
     }
+    */
     
     fprintf(fp, ";\n");
 }
