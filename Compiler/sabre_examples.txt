@@ -1,27 +1,28 @@
-
-|""
+|""""""""""""""""""""""""""""""""
 import {
 	* <stdio.h>
 }
+
 fn = () -> [x : Unit] {
-	1;
+	printf("this function works\n");
 };
 
 fn();
 
-[fn : () -> Unit]
+[fn : $() -> Unit]
 
 (a: $u8) -> [x : Unit] {
-	2;
+	printf("hey: %d\n", a);
 } (5);
 
+[c : $u32]
 
 c = 
 (a: $u8) -> [x : $u32] {
 	x = a;
 } (5);
 
-
+printf("c: %d\n", c);
 
 
 

@@ -5,6 +5,8 @@ sabre_compiler: compiler.c lexer.c parser.c parser_commons.c pretty_printer.c co
 
 run: output.c
 	./compiler sabre_examples.txt output.c output.h
+	gcc output.c -o sabre_app
+	./sabre_app
 	
 	
 clean:

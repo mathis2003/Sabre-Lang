@@ -91,12 +91,15 @@ void generate_code(struct Program* ast_root, char* file_name, char* header_file_
         return;
     }
     
-    fopen(header_file_name, "w");
-    if (fp == NULL) {
+    header_file = fopen(header_file_name, "w");
+    if (header_file == NULL) {
         // NOOO PANICK!!!!!
-        printf("error: couldn't create/open file: %s", file_name);
+        printf("error: couldn't create/open file: %s", header_file_name);
         return;
     }
+    fprintf(header_file, "#include <stdint.h>\n");
+    fprintf(header_file, "#include <stdio.h>\n");
+    fprintf(fp, "#include \"%s\"\n", header_file_name);
     
     write_entry_point(ast_root->entry_point, fp);
     fclose(fp);
@@ -504,7 +507,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
             //   \   /
             //    \ /
             //     V
-            //write_fn_literal(anon_fn_name, &(expr->fn_ptr_literal), header_file);
+            write_fn_literal(anon_fn_name, &(expr->fn_ptr_literal), header_file);
             fprintf(fp, "%s", anon_fn_name);
             break;
         }
@@ -557,7 +560,7 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     cur_decl_ptr_arr                 = fn_ptr->decl_ptr_arr;
     function_return_declaration      = fn_ptr->return_variable;
     
-    
+    printf("heyyyy\n");
     write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
     
     write_data_type(&(fn_ptr->return_variable->type), fp);
