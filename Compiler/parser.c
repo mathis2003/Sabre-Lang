@@ -102,6 +102,8 @@ struct EntryPoint* parse_entry_point() {
             }
             case TOK_DOLLAR_SIGN:
             case TOK_NUMBER:
+            case TOK_CHAR:
+            case TOK_BOOL:
             case TOK_OPEN_CURLY:
             case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(NULL);
@@ -182,6 +184,8 @@ struct Expression* parse_fn_literal(struct FnLiteral* surrounding_scope) {
             case TOK_DOLLAR_SIGN:
             case TOK_EQUALS:
             case TOK_NUMBER:
+            case TOK_CHAR:
+            case TOK_BOOL:
             case TOK_OPEN_CURLY:
             case TOK_OPEN_PAREN: {
                 struct Statement* stmt_ptr = parse_statement(surrounding_scope);
@@ -456,7 +460,16 @@ struct Statement* parse_statement(struct FnLiteral* surrounding_scope) {
         stmt.stmt_type = STMT_EXPR;
         stmt.expr = parse_expression();
         eat_token(TOK_SEMI_COLON);
-    } else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
+    } else if (get_tok_type(cur_token_ptr) == TOK_BOOL) {
+        stmt.stmt_type = STMT_EXPR;
+        stmt.expr = parse_expression();
+        eat_token(TOK_SEMI_COLON);
+    } else if (get_tok_type(cur_token_ptr) == TOK_CHAR) {
+        stmt.stmt_type = STMT_EXPR;
+        stmt.expr = parse_expression();
+        eat_token(TOK_SEMI_COLON);
+    }
+    else if (cur_token_ptr->tok_type == TOK_IDENTIFIER) {
         if (str_equals_literal(&(cur_token_ptr->name_str), "if")) {
             // parse if expression
             stmt.stmt_type = STMT_EXPR;
@@ -623,6 +636,7 @@ struct Expression* parse_expression() {
         cur_token_ptr->tok_type == TOK_OPEN_PAREN ||
         cur_token_ptr->tok_type == TOK_OPEN_CURLY ||
         cur_token_ptr->tok_type == TOK_STRING     ||
+        cur_token_ptr->tok_type == TOK_CHAR       ||
         cur_token_ptr->tok_type == TOK_DOLLAR_SIGN) {
         
         expr_ptr = parse_logic_expr();
@@ -654,33 +668,10 @@ struct Expression* parse_assignment(Expression* left_expr) {
         assign_expr.assignment.arrow_operator = 1;
         assign_expr.assignment.assigned_expr = parse_expression();
         
-        /*
-        
-        if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON        ||
-             get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY)) {
-            // right hand side is a function literal
-            //assign_expr.assignment.assigned_val_is_fn_literal = 1;
-            assign_expr.assignment.assigned_expr = parse_fn_literal(NULL);
-        } else {
-            //assign_expr.assignment.assigned_val_is_fn_literal = 0;
-            assign_expr.assignment.assigned_expr = parse_expression();
-        }*/
     } else { // this means there was an equals sign for the assignment
         next_token(); // skip over equals sign
         assign_expr.assignment.arrow_operator = 0;
         
-        /*
-        if ((get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(1)) == TOK_CLOSE_PAREN) ||
-            (get_tok_type(cur_token_ptr) == TOK_OPEN_PAREN && get_tok_type(peek_token(2)) == TOK_COLON        ||
-             get_tok_type(cur_token_ptr) == TOK_OPEN_CURLY)) {
-            //assign_expr.assignment.assigned_val_is_fn_literal = 1;
-            assign_expr.assignment.assigned_expr = parse_fn_literal(NULL);
-        } else {
-            //assign_expr.assignment.assigned_val_is_fn_literal = 0;
-            assign_expr.assignment.assigned_expr = parse_expression();
-        }
-         */
         assign_expr.assignment.assigned_expr = parse_expression();
     }
     
@@ -879,7 +870,22 @@ struct Expression* parse_factor() {
         string_literal_expr.string_literal = cur_token_ptr->name_str;
         ret_expr = add_expression_to_bucket(&string_literal_expr, ast_root_node->allocators.expression_bucket);
         next_token();
-    } else if (cur_token_ptr->tok_type == TOK_OPEN_CURLY) {
+    }
+    else if (cur_token_ptr->tok_type == TOK_CHAR) {
+        struct Expression char_literal_expr;
+        char_literal_expr.expr_type = EXPR_CHAR_LITERAL;
+        char_literal_expr.char_literal = (cur_token_ptr->name_str.str_start)[0];
+        ret_expr = add_expression_to_bucket(&char_literal_expr, ast_root_node->allocators.expression_bucket);
+        next_token();
+    }
+    else if (cur_token_ptr->tok_type == TOK_BOOL) {
+        struct Expression bool_literal_expr;
+        bool_literal_expr.expr_type = EXPR_BOOL_LITERAL;
+        bool_literal_expr.bool_literal = str_equals_literal(&(cur_token_ptr->name_str), "true") ? 1 : 0;
+        ret_expr = add_expression_to_bucket(&bool_literal_expr, ast_root_node->allocators.expression_bucket);
+        next_token();
+    }
+    else if (cur_token_ptr->tok_type == TOK_OPEN_CURLY) {
         
         ret_expr = parse_fn_literal(NULL);
     }

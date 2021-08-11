@@ -37,8 +37,8 @@ uint8_t *prev_y = &(uint8_t ){0};
 uint32_t keyPressed;
 uint8_t  anon2 (ptlRaster  screen1 , uint8_t  x , uint8_t  y , uint8_t * prev_x , uint8_t * prev_y) {
 	uint8_t  return_val;
-	(ptlDrawPixel(screen1 , 46 , (*prev_x) , (*prev_y)));
-	(ptlDrawPixel(screen1 , 35 , x , y));
+	(ptlDrawPixel(screen1 , '.' , (*prev_x) , (*prev_y)));
+	(ptlDrawPixel(screen1 , '#' , x , y));
 	(*prev_x = x);
 	(*prev_y = y);
 	(delay(10));
@@ -55,7 +55,7 @@ uint8_t (*game_loop)(ptlRaster  , uint8_t  , uint8_t  , uint8_t * , uint8_t *) =
 int main() {
 *prev_x = 5;
 *prev_y = 5;
-	(screen1 = (ptlInitRaster(25 , 20 , 46)));
+	(screen1 = (ptlInitRaster(25 , 20 , '.')));
 	(game_loop(screen1 , x , y , prev_x , prev_y));
 	(ptlDestroyRaster(screen1));
 

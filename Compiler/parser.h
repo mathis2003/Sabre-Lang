@@ -10,6 +10,7 @@ typedef enum ExpressionType {
     EXPR_LOGIC_AND, EXPR_LOGIC_OR,
     EXPR_COND_EQUALS, EXPR_COND_GREATER_EQUALS, EXPR_COND_LOWER_EQUALS, EXPR_COND_GREATER, EXPR_COND_LOWER,
     EXPR_IDENT_LITERAL, EXPR_NUM_LITERAL, EXPR_FN_LITERAL, EXPR_STR_LITERAL,
+    EXPR_CHAR_LITERAL, EXPR_BOOL_LITERAL,
     EXPR_ASSIGN,
     EXPR_VALUE_OF,
     EXPR_MEMBER_ACCESS
@@ -127,6 +128,7 @@ typedef struct Expression {
         // literals
         long int              int_literal;
         char                  char_literal;
+        char                  bool_literal;
         struct StringStruct   string_literal;
         struct StringStruct   identifier_literal;
         struct BinOp          bin_op;

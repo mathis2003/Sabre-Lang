@@ -494,21 +494,18 @@ void write_expression(struct Expression* expr, FILE* fp) {
         case EXPR_FN_LITERAL: {
             char* anon_fn_name = NULL;
             anon_fn_name = generate_anon_fn_name();
-            // this has to be fixed, below wants to write a function definition of a C function, but it can't do that outside of the scope of whetever
-            // the statement is in, thus it must be forwardly declared or something like that.
-            // code that must be fixed:
-            //    ___
-            //    | |
-            //    | |
-            //    | |
-            //    | |
-            //  __| |__
-            //  \     /
-            //   \   /
-            //    \ /
-            //     V
             write_fn_literal(anon_fn_name, &(expr->fn_ptr_literal), header_file);
             fprintf(fp, "%s", anon_fn_name);
+            break;
+        }
+            
+        case EXPR_CHAR_LITERAL: {
+            fprintf(fp, "\'%c\'", expr->char_literal);
+            break;
+        }
+            
+        case EXPR_BOOL_LITERAL: {
+            fprintf(fp, "%d", (expr->bool_literal) ? 1 : 0);
             break;
         }
             

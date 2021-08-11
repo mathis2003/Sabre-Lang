@@ -323,15 +323,6 @@ void print_expression(Expression* expr, int tree_level) {
             
             PRINT_NODE("assigned:\n", tree_level+1);
             print_expression(expr->assignment.assigned_expr, tree_level+2);
-            /*
-            if (expr->assignment.assigned_val_is_fn_literal) {
-                print_fn_literal(expr->assignment.assigned_fn_literal, tree_level+2);
-                printf("\n");
-            } else {
-                print_expression(expr->assignment.assigned_expr, tree_level+2);
-                printf("\n");
-            }
-             */
             
             break;
         }
@@ -374,6 +365,20 @@ void print_expression(Expression* expr, int tree_level) {
         case EXPR_FN_LITERAL: {
             PRINT_NODE("type: function literal\n", tree_level+1);
             print_fn_literal(&(expr->fn_ptr_literal), tree_level+2);
+            break;
+        }
+            
+        case EXPR_CHAR_LITERAL: {
+            PRINT_NODE("type: char literal\n", tree_level+1);
+            PRINT_NODE("", tree_level+1);
+            printf("%c", expr->char_literal);
+            break;
+        }
+            
+        case EXPR_BOOL_LITERAL: {
+            PRINT_NODE("type: bool literal\n", tree_level+1);
+            PRINT_NODE("", tree_level+1);
+            printf("%s", expr->bool_literal ? "true" : "false");
             break;
         }
             

@@ -26,9 +26,8 @@ printf("c: %d\n", c);
 
 
 
-
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""|
+
 
 import {
 	* "ptlib.h"
@@ -62,14 +61,14 @@ import {
 [y : $u8 = 5]
 [prev_x : u8 <- 5]
 [prev_y : u8 <- 5]
-screen1 = ptlInitRaster(25, 20, 46);
+screen1 = ptlInitRaster(25, 20, '.');
 
 game_loop(screen1, x, y, prev_x, prev_y);
 
 [game_loop = (screen1 : $ptlRaster, x : $u8, y : $u8, prev_x : u8, prev_y : u8) -> [return_val : $u8] {
 
-	ptlDrawPixel((screen1), 46, $prev_x, $prev_y);
-	ptlDrawPixel(screen1, 35, x, y);
+	ptlDrawPixel((screen1), '.', $prev_x, $prev_y);
+	ptlDrawPixel(screen1, '#', x, y);
 
 	prev_x <- x;
 	prev_y <- y;
