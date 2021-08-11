@@ -1,7 +1,7 @@
 CC=gcc
 
-sabre_compiler: compiler.c ./Lexer/lexer.c ./Parser/parser.c ./Parser/parser_commons.c ./PrettyPrinter/pretty_printer.c ./CodeGen/code_gen.c ./Commons/string_commons.c
-	$(CC) compiler.c ./Lexer/lexer.c ./Parser/parser.c ./Parser/parser_commons.c ./PrettyPrinter/pretty_printer.c ./CodeGen/code_gen.c ./Commons/string_commons.c -o compiler
+sabre_compiler: compiler.c ./Lexer/lexer.c ./Parser/parser.c ./Parser/parser_commons.c ./PrettyPrinter/pretty_printer.c ./CodeGen/code_gen.c ./CodeGen/code_gen_commons.c ./Commons/string_commons.c ./Commons/commons.c
+	$(CC) compiler.c ./Lexer/lexer.c ./Parser/parser.c ./Parser/parser_commons.c ./PrettyPrinter/pretty_printer.c ./CodeGen/code_gen.c ./CodeGen/code_gen_commons.c ./Commons/string_commons.c ./Commons/commons.c -o compiler
 
 run: output.c
 	./compiler sabre_examples.txt output.c output.h

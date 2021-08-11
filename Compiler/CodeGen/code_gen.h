@@ -15,6 +15,13 @@ void write_expression(struct Expression* expr, FILE* fp);
 void write_assignment(struct Assignment* assignment, FILE* fp);
 void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp);
 
+signed int is_value(Expression* left_expr);
+
+/*----------------------------------------------------------------------------*/
+
+signed int is_primitive_type(struct StringStruct* str);
+
+
 char* generate_anon_fn_name();
 
 

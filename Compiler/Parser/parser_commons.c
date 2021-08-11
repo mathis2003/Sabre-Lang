@@ -518,3 +518,151 @@ void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add) {
 void free_void_ptr_arr(struct VoidPtrArr* void_ptr_arr) {
     free(void_ptr_arr->void_ptrs);
 }
+
+/*---------------------------------------------------------------------------------------------*/
+
+
+char* get_tok_name(Token* tok) {
+    switch (get_tok_type(tok)) {
+        case TOK_INVALID: {
+            char* str = malloc(8* sizeof(char));
+            str[0] = 'i'; str[1] = 'n'; str[2] = 'v'; str[3] = 'a'; str[4] = 'l'; str[5] = 'i'; str[6] = 'd'; str[7] = '\0';
+            return str;
+        }
+        case TOK_IDENTIFIER: {
+            char* str = malloc(11* sizeof(char));
+            str[0] = 'i'; str[1] = 'd'; str[2] = 'e'; str[3] = 'n'; str[4] = 't'; str[5] = 'i'; str[6] = 'f'; str[7] = 'i'; str[8] = 'e'; str[9] = 'r'; str[10] = '\0';
+            return str;
+        }
+        case TOK_NUMBER: {
+            char* str = malloc(7* sizeof(char));
+            str[0] = 'n'; str[1] = 'u'; str[2] = 'm'; str[3] = 'b'; str[4] = 'e'; str[5] = 'r'; str[6] = '\0';
+            return str;
+        }
+        case TOK_BOOL: {
+            char* str = malloc(5* sizeof(char));
+            str[0] = 'b'; str[1] = 'o'; str[2] = 'o'; str[3] = 'l'; str[4] = '\0';
+            return str;
+        }
+        case TOK_STRING: {
+            char* str = malloc(7* sizeof(char));
+            str[0] = 's'; str[1] = 't'; str[2] = 'r'; str[3] = 'i'; str[4] = 'n'; str[5] = 'g'; str[6] = '\0';
+            return str;
+        }
+        case TOK_CHAR: {
+            char* str = malloc(5* sizeof(char));
+            str[0] = 'c'; str[1] = 'h'; str[2] = 'a'; str[3] = 'r'; str[4] = '\0';
+            return str;
+        }
+        case TOK_COMMA: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ','; str[1] = '\0';
+            return str;
+        }
+        case TOK_DOT: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '.'; str[1] = '\0';
+            return str;
+        }
+        case TOK_SEMI_COLON: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ';'; str[1] = '\0';
+            return str;
+        }
+        case TOK_COLON: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ':'; str[1] = '\0';
+            return str;
+        }
+        case TOK_PLUS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '+'; str[1] = '\0';
+            return str;
+        }
+        case TOK_MINUS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '-'; str[1] = '\0';
+            return str;
+        }
+        case TOK_ASTERISK: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '*'; str[1] = '\0';
+            return str;
+        }
+        case TOK_SLASH: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '/'; str[1] = '\0';
+            return str;
+        }
+        case TOK_DOLLAR_SIGN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '$'; str[1] = '\0';
+            return str;
+        }
+        case TOK_AT_SIGN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '@'; str[1] = '\0';
+            return str;
+        }
+        case TOK_EQUALS: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '='; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_PAREN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '('; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_PAREN: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ')'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_CURLY: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '{'; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_CURLY: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '}'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_SQUARE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '['; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_SQUARE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = ']'; str[1] = '\0';
+            return str;
+        }
+        case TOK_OPEN_ANGLE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '<'; str[1] = '\0';
+            return str;
+        }
+        case TOK_CLOSE_ANGLE_BRACKET: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '>'; str[1] = '\0';
+            return str;
+        }
+        case TOK_AMPERSAND: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '&'; str[1] = '\0';
+            return str;
+        }
+        case TOK_PIPE: {
+            char* str = malloc(sizeof(char) * 2);
+            str[0] = '|'; str[1] = '\0';
+            return str;
+        }
+            
+        default:
+            break;
+    }
+    
+    return NULL;
+}

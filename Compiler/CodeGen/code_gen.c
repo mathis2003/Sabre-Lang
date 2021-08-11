@@ -22,61 +22,6 @@ struct VoidPtrArr cur_param_decl_ptr_arr;
 struct VoidPtrArr cur_decl_ptr_arr;
 struct Declaration* function_return_declaration;
 
-signed int is_primitive_type(struct StringStruct* str) {
-    if (str_equals_literal(str, "Unit")) return 1;
-    else if (str_equals_literal(str, "u8")) return 1;
-    else if (str_equals_literal(str, "u16")) return 1;
-    else if (str_equals_literal(str, "u32")) return 1;
-    
-    return 0;
-}
-
-signed int is_value(Expression* left_expr) {
-    // this function determines whether the expression is a value or a variable.
-    // it returns 1 if the expression is a value, 0 if it is a variable, and dies if the variable is not found
-    if (left_expr->expr_type == EXPR_IDENT_LITERAL) {
-        // look in parameters
-        for (int i = 0; i < cur_param_decl_ptr_arr.size; i++) {
-            Declaration* cur_decl = (Declaration*)(cur_param_decl_ptr_arr.void_ptrs[i]);
-            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
-                // found the right declaration of the variable/value in question
-                if (cur_decl->type.is_value) return 1;
-                else return 0;
-            }
-        }
-            
-        // look in return declaration
-        if (function_return_declaration != NULL) {
-            if (str_equals_str(&(left_expr->identifier_literal), &(function_return_declaration->identifier))) {
-                // found the right declaration of the variable/value in question
-                if (function_return_declaration->type.is_value) return 1;
-                else return 0;
-            }
-        }
-        
-        
-        // look in declarations made in function body
-        for (int i = 0; i < cur_decl_ptr_arr.size; i++) {
-            Declaration* cur_decl = (Declaration*)(cur_decl_ptr_arr.void_ptrs[i]);
-            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
-                // found the right declaration of the variable/value in question
-                if (cur_decl->type.is_value) return 1;
-                else return 0;
-            }
-        }
-        
-    } else if (left_expr->expr_type == EXPR_MEMBER_ACCESS) {
-        // look at struct member's return type
-    } else if (left_expr->expr_type == EXPR_IF_THEN_ELSE) {
-        // look at first expressions return type
-    } else if (left_expr->expr_type == EXPR_FN_CALL) {
-        // look at return type
-    }
-    
-    // in case of any other expression (add, sub, logic or, ...) the returned thing is a value
-    return 1;
-    
-}
 
 void generate_code(struct Program* ast_root, char* file_name, char* header_file_name) {
     global_switch_pair.old_name = NULL;
@@ -461,14 +406,7 @@ void write_expression(struct Expression* expr, FILE* fp) {
             fprintf(fp, " = ");
             
             write_expression(expr->assignment.assigned_expr, fp);
-            /*
-            if (expr->assignment.assigned_val_is_fn_literal) {
-                // do some stuff with anonymous function pointer or something
-                write_fn_literal(str_to_c_str(&(expr->assignment.left->identifier_literal)), expr->assignment.assigned_fn_literal, fp);
-            } else {
-                write_expression(expr->assignment.assigned_expr, fp);
-            }
-            */
+            
             fprintf(fp, ")");
             break;
         }
@@ -516,7 +454,6 @@ void write_expression(struct Expression* expr, FILE* fp) {
         }
             
     }
-    //fprintf(fp, ")");
 }
 
 void write_assignment(struct Assignment* assignment, FILE* fp) {
@@ -534,14 +471,6 @@ void write_assignment(struct Assignment* assignment, FILE* fp) {
     fprintf(fp, " = ");
     
     write_expression(assignment->assigned_expr, fp);
-    /*
-    if (assignment->assigned_val_is_fn_literal) {
-        // do some stuff with anonymous function pointer or something
-        write_fn_literal(str_to_c_str(&(assignment->left->identifier_literal)), assignment->assigned_fn_literal, fp);
-    } else {
-        write_expression(assignment->assigned_expr, fp);
-    }
-    */
     
     fprintf(fp, ";\n");
 }
@@ -557,7 +486,6 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     cur_decl_ptr_arr                 = fn_ptr->decl_ptr_arr;
     function_return_declaration      = fn_ptr->return_variable;
     
-    printf("heyyyy\n");
     write_declarations_arr(fn_ptr->decl_ptr_arr, fp);
     
     write_data_type(&(fn_ptr->return_variable->type), fp);
@@ -597,42 +525,53 @@ void write_fn_literal(char* fn_name, struct FnLiteral* fn_ptr, FILE* fp) {
     function_return_declaration = old_function_return_declaration;
 }
 
-/* ----------------------------------------------------------------------------- */
+/*--------------------------------------------------------------------------------------*/
 
 
-
-char* generate_anon_fn_name() {
-    static int count = 0;
-    
-    char* prefix = malloc(5 * sizeof(char));
-    prefix[0] = 'a'; prefix[1] = 'n'; prefix[2] = 'o'; prefix[3] = 'n'; prefix[4] = '\0';
-    char count_str[10];
-    sprintf(count_str, "%d", count);
-    
-    prefix = strcat(prefix, count_str);
-    
-    count++;
-    
-    return prefix;
-    
-}
-
-void init_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr) {
-    assign_dyn_arr->size = 0;
-    assign_dyn_arr->capacity = 100;
-    assign_dyn_arr->assignments = malloc(assign_dyn_arr->capacity * sizeof(struct Assignment));
-}
-
-void add_assignment_to_arr(struct AssignDynArr* assign_dyn_arr, struct Assignment* assignment_to_add) {
-    if (assign_dyn_arr->size >= assign_dyn_arr->capacity - 1) {
-        assign_dyn_arr->capacity = 2 * assign_dyn_arr->capacity;
-        assign_dyn_arr->assignments = realloc(assign_dyn_arr->assignments, assign_dyn_arr->capacity * sizeof(struct Assignment));
+signed int is_value(Expression* left_expr) {
+    // this function determines whether the expression is a value or a variable.
+    // it returns 1 if the expression is a value, 0 if it is a variable, and dies if the variable is not found
+    if (left_expr->expr_type == EXPR_IDENT_LITERAL) {
+        // look in parameters
+        for (int i = 0; i < cur_param_decl_ptr_arr.size; i++) {
+            Declaration* cur_decl = (Declaration*)(cur_param_decl_ptr_arr.void_ptrs[i]);
+            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
+                // found the right declaration of the variable/value in question
+                if (cur_decl->type.is_value) return 1;
+                else return 0;
+            }
+        }
+            
+        // look in return declaration
+        if (function_return_declaration != NULL) {
+            if (str_equals_str(&(left_expr->identifier_literal), &(function_return_declaration->identifier))) {
+                // found the right declaration of the variable/value in question
+                if (function_return_declaration->type.is_value) return 1;
+                else return 0;
+            }
+        }
+        
+        
+        // look in declarations made in function body
+        for (int i = 0; i < cur_decl_ptr_arr.size; i++) {
+            Declaration* cur_decl = (Declaration*)(cur_decl_ptr_arr.void_ptrs[i]);
+            if (str_equals_str(&(left_expr->identifier_literal), &(cur_decl->identifier))) {
+                // found the right declaration of the variable/value in question
+                if (cur_decl->type.is_value) return 1;
+                else return 0;
+            }
+        }
+        
+    } else if (left_expr->expr_type == EXPR_MEMBER_ACCESS) {
+        // look at struct member's return type
+    } else if (left_expr->expr_type == EXPR_IF_THEN_ELSE) {
+        // look at first expressions return type
+    } else if (left_expr->expr_type == EXPR_FN_CALL) {
+        // look at return type
     }
-    assign_dyn_arr->assignments[assign_dyn_arr->size] = *assignment_to_add;
-    assign_dyn_arr->size += 1;
+    
+    // in case of any other expression (add, sub, logic or, ...) the returned thing is a value
+    return 1;
+    
 }
 
-void free_assign_dyn_arr(struct AssignDynArr* assign_dyn_arr) {
-    free(assign_dyn_arr->assignments);
-    free(assign_dyn_arr);
-}

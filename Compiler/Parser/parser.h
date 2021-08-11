@@ -314,8 +314,6 @@ void free_AST(struct Program* ast_root);
 
 void init_ast_allocators(Program* program_ptr);
 
-char* get_tok_name(Token* tok);
-
 /*----------------------------------------------------------------------------------------*/
 
 struct FnLiteral* add_fn_literal_to_bucket(struct FnLiteral* fn_to_add, struct MainFnLiteralBucket* fn_bucket);
@@ -341,5 +339,7 @@ void free_struct_type_bucket(MainStructTypeBucket* struct_type_bucket);
 void init_void_ptr_arr(struct VoidPtrArr* void_ptr_arr);
 void add_void_ptr_to_arr(struct VoidPtrArr* void_ptr_arr, void* ptr_to_add);
 void free_void_ptr_arr(struct VoidPtrArr* void_ptr_arr);
+
+char* get_tok_name(Token* tok);
 
 #endif
