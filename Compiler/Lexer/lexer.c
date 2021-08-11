@@ -31,7 +31,7 @@
 #include <stdio.h>
 
 #include "lexer.h"
-#include "string_commons.h"
+#include "../Commons/string_commons.h"
 
 
 // LEXER

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
+#include "../Parser/parser.h"
 #include "code_gen.h"
 
-#include "string_commons.h"
+#include "../Commons/string_commons.h"
 
 typedef struct SwitchNamesPair {
     char *old_name, *new_name;

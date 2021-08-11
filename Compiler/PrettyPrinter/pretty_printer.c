@@ -2,9 +2,9 @@
 // INCLUDES
 #include <stdio.h>
 
-#include "lexer.h"
-#include "parser.h"
-#include "string_commons.h"
+#include "../Lexer/lexer.h"
+#include "../Parser/parser.h"
+#include "../Commons/string_commons.h"
 
 /* ----------------------------------TOKENS---------------------------------- */
 

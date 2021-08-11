@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 #include "parser.h"
-#include "lexer.h"
-#include "string_commons.h"
+#include "../Lexer/lexer.h"
+#include "../Commons/string_commons.h"
 
 
 #include <stdarg.h>

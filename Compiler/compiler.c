@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "lexer.h"
-#include "parser.h"
-#include "code_gen.h"
-#include "pretty_printer.h"
+#include "./Lexer/lexer.h"
+#include "./Parser/parser.h"
+#include "./CodeGen/code_gen.h"
+#include "./PrettyPrinter/pretty_printer.h"
 
 int main(int argc, char** argv) {
     

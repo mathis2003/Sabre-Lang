@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "lexer.h"
-#include "string_commons.h"
+#include "../Lexer/lexer.h"
+#include "../Commons/string_commons.h"
 
 
 typedef enum ExpressionType {

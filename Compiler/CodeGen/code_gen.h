@@ -19,7 +19,7 @@ char* generate_anon_fn_name();
 
 
 #include <stdlib.h>
-#include "parser.h"
+#include "../Parser/parser.h"
 
 typedef struct AssignDynArr {
     int size, capacity;

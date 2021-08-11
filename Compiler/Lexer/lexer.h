@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "string_commons.h"
+#include "../Commons/string_commons.h"
 
 typedef enum TokenType {
 	TOK_INVALID,
