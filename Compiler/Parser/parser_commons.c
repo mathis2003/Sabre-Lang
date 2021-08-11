@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "parser.h"
+#include "../Commons/commons.h"
 
 
 // --------------------------------------------------------------------------------------------------------
@@ -17,9 +18,7 @@
 struct FnLiteralBucket* add_new_fn_literal_bucket(struct FnLiteralBucket* fn_literal_bucket) {
     struct FnLiteralBucket* next_fn_literal_bucket = malloc(sizeof(FnLiteralBucket));
     if (next_fn_literal_bucket == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     
     // initialize new fn_literal bucket
@@ -28,9 +27,7 @@ struct FnLiteralBucket* add_new_fn_literal_bucket(struct FnLiteralBucket* fn_lit
     next_fn_literal_bucket->fn_literals      = malloc(next_fn_literal_bucket->capacity * sizeof(struct FnLiteral));
     // check if we ran out of heap memory
     if (next_fn_literal_bucket->fn_literals == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     // haven't run out? great, go on
     next_fn_literal_bucket->next_bucket = NULL;
@@ -66,8 +63,7 @@ void init_main_fn_literal_bucket(struct Program* program) {
     MainFnLiteralBucket* fn_literal_bucket_ptr = malloc(sizeof(MainFnLiteralBucket));
     fn_literal_bucket_ptr->root_bucket = malloc(sizeof(struct FnLiteralBucket));
     if (fn_literal_bucket_ptr->root_bucket == NULL) {
-        printf("FUCKKKKK!!!!!!");
-        return;
+        die("could not allocate memory on the heap\n");
     }
     
     fn_literal_bucket_ptr->root_bucket->size             = 0;
@@ -112,9 +108,7 @@ void free_fn_literal_bucket(MainFnLiteralBucket* fn_literal_bucket) {
 struct DeclarationBucket* add_new_declaration_bucket(struct DeclarationBucket* declaration_bucket) {
     struct DeclarationBucket* next_declaration_bucket = malloc(sizeof(DeclarationBucket));
     if (next_declaration_bucket == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     
     // initialize new declaration bucket
@@ -123,9 +117,7 @@ struct DeclarationBucket* add_new_declaration_bucket(struct DeclarationBucket* d
     next_declaration_bucket->declarations = malloc(next_declaration_bucket->capacity * sizeof(struct Declaration));
     // check if we ran out of heap memory
     if (next_declaration_bucket->declarations == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     // haven't run out? great, go on
     next_declaration_bucket->next_bucket  = NULL;
@@ -161,8 +153,7 @@ void init_main_declaration_bucket(struct Program* program) {
     struct MainDeclarationBucket* declaration_bucket_ptr = malloc(sizeof(MainDeclarationBucket));
     declaration_bucket_ptr->root_bucket = malloc(sizeof(struct DeclarationBucket));
     if (declaration_bucket_ptr->root_bucket == NULL) {
-        printf("FUCKKKKK!!!!!!");
-        return;
+        die("could not allocate memory on the heap\n");
     }
     
     declaration_bucket_ptr->root_bucket->size         = 0;
@@ -214,9 +205,7 @@ void free_declaration_bucket(MainDeclarationBucket* declaration_bucket) {
 struct StatementBucket* add_new_statement_bucket(struct StatementBucket* statement_bucket) {
     struct StatementBucket* next_statement_bucket = malloc(sizeof(StatementBucket));
     if (next_statement_bucket == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     
     // initialize new statement bucket
@@ -225,9 +214,7 @@ struct StatementBucket* add_new_statement_bucket(struct StatementBucket* stateme
     next_statement_bucket->statements       = malloc(next_statement_bucket->capacity * sizeof(struct Statement));
     // check if we ran out of heap memory
     if (next_statement_bucket->statements == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     // haven't run out? great, go on
     next_statement_bucket->next_bucket = NULL;
@@ -263,8 +250,7 @@ void init_main_statement_bucket(struct Program* program) {
     MainStatementBucket* statement_bucket_ptr = malloc(sizeof(struct MainStatementBucket));
     statement_bucket_ptr->root_bucket = malloc(sizeof(struct StatementBucket));
     if (statement_bucket_ptr->root_bucket == NULL) {
-        printf("FUCKKKKK!!!!!!");
-        return;
+        die("could not allocate memory on the heap\n");
     }
     
     statement_bucket_ptr->root_bucket->size            = 0;
@@ -311,9 +297,7 @@ void free_statement_bucket(MainStatementBucket* statement_bucket) {
 struct ExpressionBucket* add_new_expression_bucket(struct ExpressionBucket* expression_bucket) {
     struct ExpressionBucket* next_expression_bucket = malloc(sizeof(ExpressionBucket));
     if (next_expression_bucket == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     
     // initialize new expression bucket
@@ -322,9 +306,7 @@ struct ExpressionBucket* add_new_expression_bucket(struct ExpressionBucket* expr
     next_expression_bucket->expressions       = malloc(next_expression_bucket->capacity * sizeof(struct Expression));
     // check if we ran out of heap memory
     if (next_expression_bucket->expressions == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     // haven't run out? great, go on
     next_expression_bucket->next_bucket = NULL;
@@ -360,8 +342,7 @@ void init_main_expression_bucket(struct Program* program) {
     MainExpressionBucket* expression_bucket_ptr = malloc(sizeof(struct MainExpressionBucket));
     expression_bucket_ptr->root_bucket = malloc(sizeof(struct ExpressionBucket));
     if (expression_bucket_ptr->root_bucket == NULL) {
-        printf("FUCKKKKK!!!!!!");
-        return;
+        die("could not allocate memory on the heap\n");
     }
     
     expression_bucket_ptr->root_bucket->size             = 0;
@@ -407,9 +388,7 @@ void free_expression_bucket(MainExpressionBucket* expression_bucket) {
 struct StructTypeBucket* add_new_struct_type_bucket(struct StructTypeBucket* struct_type_bucket) {
     struct StructTypeBucket* next_struct_type_bucket = malloc(sizeof(StructTypeBucket));
     if (next_struct_type_bucket == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     
     // initialize new struct type bucket
@@ -418,9 +397,7 @@ struct StructTypeBucket* add_new_struct_type_bucket(struct StructTypeBucket* str
     next_struct_type_bucket->struct_types       = malloc(next_struct_type_bucket->capacity * sizeof(struct StructType));
     // check if we ran out of heap memory
     if (next_struct_type_bucket->struct_types == NULL) {
-        /* NO!!!! PANICK!!!! ERROR!!!!! */
-        printf("FUCKKKKK!!!!!!");
-        return NULL;
+        die("could not allocate memory on the heap\n");
     }
     // haven't run out? great, go on
     next_struct_type_bucket->next_bucket = NULL;
@@ -456,8 +433,7 @@ void init_main_struct_type_bucket(struct Program* program) {
     MainStructTypeBucket* struct_type_bucket_ptr = malloc(sizeof(struct MainStructTypeBucket));
     struct_type_bucket_ptr->root_bucket = malloc(sizeof(struct StructTypeBucket));
     if (struct_type_bucket_ptr->root_bucket == NULL) {
-        printf("FUCKKKKK!!!!!!");
-        return;
+        die("could not allocate memory on the heap\n");
     }
     
     struct_type_bucket_ptr->root_bucket->size              = 0;
